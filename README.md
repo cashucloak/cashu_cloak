@@ -1,9 +1,10 @@
-# Cashu Nutshell
+# Cashu Cloak
+
+Cashu Cloak is a private fork of the [Cashu Nutshell](https://github.com/cashubtc/nutshell) project that adds steganography capabilities to hide Cashu tokens within images.
 
 **Nutshell is a Chaumian Ecash wallet and mint for Bitcoin Lightning based on the Cashu protocol.**
 
-<a href="https://pypi.org/project/cashu/"><img alt="Release" src="https://img.shields.io/pypi/v/cashu?color=black"></a> <a href="https://pepy.tech/project/cashu"> <img alt="Downloads" src="https://pepy.tech/badge/cashu"></a> <a href="https://app.codecov.io/gh/cashubtc/nutshell"><img alt="Coverage" src="https://img.shields.io/codecov/c/gh/cashubtc/nutshell"></a>
-
+<a href="https://pypi.org/project/cashu/"><img alt="Release" src="https://img.shields.io/pypi/v/cashu?color=black"></a> <a href="https://pepy.tech/project/cashu"> <img alt="Downloads" src="https://pepy.tech/badge/cashu"></a>
 
 *Disclaimer: The author is NOT a cryptographer and this work has not been reviewed. This means that there is very likely a fatal flaw somewhere. Cashu is still experimental and not production-ready.*
 
@@ -22,11 +23,12 @@ Cashu is a free and open-source [Ecash protocol](https://github.com/cashubtc/nut
 
 - Bitcoin Lightning support (LND, CLN, et al.)
 - Full support for the Cashu protocol [specifications](https://github.com/cashubtc/nuts)
-- Standalone CLI  wallet and mint server
+- Standalone CLI wallet and mint server
 - Wallet and mint library you can include in other Python projects
 - PostgreSQL and SQLite
 - Wallet with builtin Tor
 - Use multiple mints in a single wallet
+- **NEW: Steganography support for hiding tokens in images**
 
 ### Advanced features
 - Deterministic wallet with seed phrase backup
@@ -34,6 +36,7 @@ Cashu is a free and open-source [Ecash protocol](https://github.com/cashubtc/nut
 - Wallet and mint support for keyset rotations
 - DLEQ proofs for offline transactions
 - Send and receive tokens on nostr
+- **NEW: Interactive image selection for token hiding**
 
 ## The Cashu protocol
 Different Cashu clients and mints use the same protocol to achieve interoperability. See the [documentation page](https://docs.cashu.space/) for more information on other projects. If you are interested in developing on your own Cashu project, please refer to the protocol specs [protocol specs](https://github.com/cashubtc/nuts).
@@ -86,10 +89,11 @@ curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
 echo export PATH=\"$HOME/.local/bin:$PATH\" >> ~/.bashrc
 source ~/.bashrc
 ```
+
 #### Poetry: Install Cashu
 ```bash
 # install cashu
-git clone https://github.com/cashubtc/nutshell.git cashu
+git clone https://github.com/ridwan102/cashu_cloak.git cashu
 cd cashu
 git checkout <latest_tag>
 pyenv local 3.10.4
@@ -101,6 +105,7 @@ To update Cashu to the newest version enter
 ```bash
 git pull && poetry install
 ```
+
 #### Poetry: Using the Nutshell wallet
 
 Cashu should be now installed. To execute the following commands, activate your virtual Poetry environment via
@@ -110,6 +115,7 @@ poetry shell
 ```
 
 If you don't activate your environment, just prepend `poetry run` to all following commands.
+
 ## Configuration
 ```bash
 mv .env.example .env
@@ -169,6 +175,38 @@ To receive tokens, another user enters:
 cashu receive cashuAeyJwcm9vZnMiOiBbey...
 ```
 
+# Hide tokens in images (Steganography)
+You can hide Cashu tokens within images using steganography. This allows you to share tokens in a more subtle way.
+
+When sending tokens, you'll be prompted to hide the token in an image:
+```bash
+cashu send 10
+Would you like to hide this token inside of an image? [y/N]: y
+
+Available images:
+1. elephant.png
+2. fruit.png
+3. pumpkin.png
+
+Select an image number: 1
+
+Token successfully hidden in image: /path/to/test_pictures/elephant.png
+```
+
+To reveal a hidden token from an image:
+```bash
+cashu reveal elephant.png
+Found token in image:
+
+cashuB...
+
+Would you like to receive this token? [Y/n]: y
+Token received successfully!
+Balance: 10 sat
+```
+
+Note: The image must be large enough to hold the token data. The command will warn you if the image is too small.
+
 # Starting the wallet API daemon
 Nutshell wallet can be used in daemon mode that can be controlled through a REST API:
 ```bash
@@ -177,34 +215,14 @@ cashu -d
 
 You can find the API docs at [http://localhost:4448/docs](http://localhost:4448/docs).
 
-#### Hide tokens in images (Steganography)
-You can hide Cashu tokens within images using steganography. This allows you to share tokens in a more subtle way.
-
-To hide a token in an image:
-```bash
-cashu hide "cashuAeyJwcm9vZnMiOiBbey..." image.png
-```
-
-To reveal a hidden token from an image:
-```bash
-cashu reveal image.png
-```
-
-After revealing the token, you can receive it using:
-```bash
-cashu receive <revealed_token>
-```
-
-Note: The image must be large enough to hold the token data. The command will warn you if the image is too small.
-
 # Running a mint
 This command runs the mint on your local computer. Skip this step if you want to use the [public test mint](#test-instance) instead.
 
 ## Docker
-
 ```
 docker run -d -p 3338:3338 --name nutshell -e MINT_BACKEND_BOLT11_SAT=FakeWallet -e MINT_LISTEN_HOST=0.0.0.0 -e MINT_LISTEN_PORT=3338 -e MINT_PRIVATE_KEY=TEST_PRIVATE_KEY cashubtc/nutshell:0.16.5 poetry run mint
 ```
+
 
 ## From this repository
 Before you can run your own mint, make sure to enable a Lightning backend in `MINT_BACKEND_BOLT11_SAT` and set `MINT_PRIVATE_KEY` in your `.env` file.
@@ -213,7 +231,6 @@ poetry run mint
 ```
 
 For testing, you can use Nutshell without a Lightning backend by setting `MINT_BACKEND_BOLT11_SAT=FakeWallet` in the `.env` file.
-
 
 # Running tests
 To run the tests in this repository, first install the dev dependencies with
@@ -231,7 +248,18 @@ You can run the tests with
 poetry run pytest tests
 ```
 
-
 # Contributing
 
 Developers are invited to contribute to Nutshell. Please see the [contribution guide](CONTRIBUTING.md).
+
+## Original Project
+This project is based on [Cashu Nutshell](https://github.com/cashubtc/nutshell) by the Cashu team.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Cashu Nutshell](https://github.com/cashubtc/nutshell) - The original project
+- [Stegano-rs](https://github.com/steganogram/stegano-rs) - Inspiration for steganography implementation
