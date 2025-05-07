@@ -59,6 +59,7 @@ from ..helpers import (
 )
 from ..nostr import receive_nostr, send_nostr
 from ..subscriptions import SubscriptionManager
+from ...steganography import hide_token, reveal_token
 
 
 class NaturalOrderGroup(click.Group):
@@ -638,7 +639,7 @@ async def send_command(
     wallet: Wallet = ctx.obj["WALLET"]
     amount = int(amount * 100) if wallet.unit in [Unit.usd, Unit.eur] else int(amount)
     if not nostr:
-        await send(
+        balance, token = await send(
             wallet,
             amount=amount,
             lock=lock,
@@ -649,6 +650,59 @@ async def send_command(
             memo=memo,
             force_swap=force_swap,
         )
+        
+        # Ask if user wants to hide the token in an image
+        if not yes:
+            hide_in_image = click.confirm(
+                "Would you like to hide this token inside of an image?",
+                default=False
+            )
+            
+            if hide_in_image:
+                # Get the workspace root directory (where test_pictures folder is)
+                workspace_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+                test_pictures_dir = os.path.join(workspace_root, "test_pictures")
+                
+                if not os.path.exists(test_pictures_dir):
+                    print("Error: test_pictures directory not found")
+                    return
+                
+                images = [f for f in os.listdir(test_pictures_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                
+                if not images:
+                    print("Error: No images found in test_pictures directory")
+                    return
+                
+                print("\nAvailable images:")
+                for i, img in enumerate(images, 1):
+                    print(f"{i}. {img}")
+                
+                # Get user's choice
+                while True:
+                    try:
+                        choice = int(input("\nSelect an image number: "))
+                        if 1 <= choice <= len(images):
+                            selected_image = images[choice - 1]
+                            break
+                        else:
+                            print("Invalid selection. Please try again.")
+                    except ValueError:
+                        print("Please enter a valid number.")
+                
+                try:
+                    output_path = hide_token(token, selected_image)
+                    print(f"\nToken successfully hidden in image: {output_path}")
+                    print("\nYou can reveal this token later using: cashu reveal <image_name>")
+                except Exception as e:
+                    print(f"\nError hiding token: {e}")
+                    print("\nOriginal token:")
+                    print(token)
+            else:
+                print("\nToken:")
+                print(token)
+        else:
+            print("\nToken:")
+            print(token)
     else:
         await send_nostr(wallet, amount=amount, pubkey=nostr, verbose=verbose, yes=yes)
     await print_balance(ctx)
@@ -1183,3 +1237,50 @@ async def selfpay(ctx: Context, all: bool = False):
     print(token)
     token_obj = TokenV4.deserialize(token)
     await receive(wallet, token_obj)
+
+
+@cli.command("hide", help="Hide a token in an image from test_pictures folder.")
+@click.argument("token")
+@click.argument("image")
+@click.pass_context
+@coro
+async def hide_token_command(ctx: Context, token: str, image: str):
+    """Hide a Cashu token in an image using steganography."""
+    try:
+        output_path = hide_token(token, image)
+        print(f"Token successfully hidden in image: {output_path}")
+    except Exception as e:
+        print(f"Error hiding token: {e}")
+
+
+@cli.command("reveal", help="Extract a token from an image in test_pictures folder.")
+@click.argument("image")
+@click.pass_context
+@coro
+async def reveal_token_command(ctx: Context, image: str):
+    """Extract a Cashu token from an image."""
+    try:
+        token = reveal_token(image)
+        print("Found token in image:")
+        print(f"\n{token}\n")
+        
+        # Ask if user wants to receive the token
+        if click.confirm("Would you like to receive this token?", default=True):
+            wallet: Wallet = ctx.obj["WALLET"]
+            token_obj = deserialize_token_from_string(token)
+            # verify that we trust the mint in this tokens
+            # ask the user if they want to trust the new mint
+            mint_url = token_obj.mint
+            mint_wallet = await Wallet.with_db(
+                mint_url,
+                os.path.join(settings.cashu_dir, wallet.name),
+                unit=token_obj.unit,
+            )
+            await verify_mint(mint_wallet, mint_url)
+            receive_wallet = await receive(mint_wallet, token_obj)
+            ctx.obj["WALLET"] = receive_wallet
+            await print_balance(ctx)
+        else:
+            print("\nYou can receive this token later using: cashu receive <token>")
+    except Exception as e:
+        print(f"Error revealing token: {e}")

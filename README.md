@@ -177,6 +177,26 @@ cashu -d
 
 You can find the API docs at [http://localhost:4448/docs](http://localhost:4448/docs).
 
+#### Hide tokens in images (Steganography)
+You can hide Cashu tokens within images using steganography. This allows you to share tokens in a more subtle way.
+
+To hide a token in an image:
+```bash
+cashu hide "cashuAeyJwcm9vZnMiOiBbey..." image.png
+```
+
+To reveal a hidden token from an image:
+```bash
+cashu reveal image.png
+```
+
+After revealing the token, you can receive it using:
+```bash
+cashu receive <revealed_token>
+```
+
+Note: The image must be large enough to hold the token data. The command will warn you if the image is too small.
+
 # Running a mint
 This command runs the mint on your local computer. Skip this step if you want to use the [public test mint](#test-instance) instead.
 
