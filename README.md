@@ -19,7 +19,7 @@ Cashu is a free and open-source [Ecash protocol](https://github.com/cashubtc/nut
 <a href="#running-a-mint">Run a mint</a>
 </p>
 
-###  overview
+### Feature overview
 
 - Bitcoin Lightning support (LND, CLN, et al.)
 - Full support for the Cashu protocol [specifications](https://github.com/cashubtc/nuts)
