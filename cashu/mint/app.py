@@ -7,6 +7,7 @@ from traceback import print_exception
 from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from starlette.requests import Request
 
@@ -17,6 +18,7 @@ from .router import redis, router
 from .router_deprecated import router_deprecated
 from .startup import shutdown_mint as shutdown_mint_init
 from .startup import start_mint_init
+from ..steganography.router import router as steganography_router
 
 if settings.debug_profiling:
     pass
@@ -55,6 +57,15 @@ def create_app(config_object="core.settings") -> FastAPI:
             "url": "https://raw.githubusercontent.com/cashubtc/cashu/main/LICENSE",
         },
         lifespan=lifespan,
+    )
+
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allows all origins
+        allow_credentials=True,
+        allow_methods=["*"],  # Allows all methods
+        allow_headers=["*"],  # Allows all headers
     )
 
     return app
@@ -110,3 +121,4 @@ if settings.debug_mint_only_deprecated:
 else:
     app.include_router(router=router, tags=["Mint"])
     app.include_router(router=router_deprecated, tags=["Deprecated"], deprecated=True)
+    app.include_router(router=steganography_router)  # Add steganography router

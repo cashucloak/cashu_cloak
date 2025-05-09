@@ -22,19 +22,16 @@ def get_image_path(image_name: str) -> str:
     
     return image_path
 
-def hide_token(token: str, image_name: str) -> str:
+def hide_token(token: str, image_path: str) -> str:
     """Hide a Cashu token in an image using LSB steganography.
     
     Args:
         token: The Cashu token to hide
-        image_name: Name of the image file in test_pictures folder
+        image_path: Path to the image file
         
     Returns:
         Path to the modified image containing the hidden token
     """
-    # Get full path to the image
-    image_path = get_image_path(image_name)
-    
     # Convert token to binary
     token_bytes = token.encode('utf-8')
     binary_token = ''.join(format(byte, '08b') for byte in token_bytes)
@@ -63,24 +60,24 @@ def hide_token(token: str, image_name: str) -> str:
                 else:
                     break
     
-    # Save the modified image back to the original path
-    stego_img = Image.fromarray(pixels)
-    stego_img.save(image_path)
+    # Create output path
+    output_path = os.path.join(os.path.dirname(image_path), 'hidden_' + os.path.basename(image_path))
     
-    return image_path
+    # Save the modified image
+    stego_img = Image.fromarray(pixels)
+    stego_img.save(output_path)
+    
+    return output_path
 
-def reveal_token(image_name: str) -> str:
+def reveal_token(image_path: str) -> str:
     """Extract a hidden Cashu token from an image.
     
     Args:
-        image_name: Name of the image file in test_pictures folder
+        image_path: Path to the image file
         
     Returns:
         The extracted Cashu token
     """
-    # Get full path to the image
-    image_path = get_image_path(image_name)
-    
     # Load image
     img = Image.open(image_path)
     pixels = np.array(img)
