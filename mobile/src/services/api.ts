@@ -97,13 +97,24 @@ export const requestMintQuote = async (amount: number, unit: string = 'sat', des
 };
 
 // Pay a Lightning invoice (melt)
-export const payLightningInvoice = async (invoice: string, unit: string = 'sat') => {
-  // Step 1: Get a melt quote
-  const quoteRes = await api.post('/v1/melt/quote/bolt11', { unit, request: invoice });
+export const payLightningInvoice = async (invoice: string) => {
+  // First get a melt quote
+  const quoteRes = await api.post('/v1/melt/quote/bolt11', { request: invoice, unit: 'sat' });
   const quote = quoteRes.data.quote;
-  // Step 2: Actually pay (melt) - this would require proofs/inputs from wallet state
-  // This is a placeholder; real implementation needs wallet integration
-  // const meltRes = await api.post('/v1/melt/bolt11', { quote, inputs: [], outputs: [] });
-  // return meltRes.data;
-  return quoteRes.data;
+  
+  // Then actually pay
+  const response = await api.post('/v1/melt/bolt11', { 
+    quote: quote,
+    inputs: [], // The wallet will handle this
+    outputs: [] // The wallet will handle this
+  });
+  return response.data;
 }; 
+
+// Check Lightning invoice status
+export const checkInvoiceStatus = async (payment_request: string, mint?: string) => {
+  const params: any = { payment_request };
+  if (mint) params.mint = mint;
+  const response = await api.get('/lightning/invoice_state', { params });
+  return response.data;
+};

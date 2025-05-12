@@ -55,6 +55,8 @@ class LightningWallet(Wallet):
         return InvoiceResponse(
             ok=True,
             payment_request=mint_quote.request,
+            checking_id=mint_quote.checking_id,
+            quote=mint_quote.quote,
         )
 
     async def pay_invoice(self, request: str) -> PaymentResponse:

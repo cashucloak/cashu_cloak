@@ -9,13 +9,24 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice } from '../services/api';
+import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice, checkInvoiceStatus } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
 type Tab = 'balance' | 'send' | 'receive';
+
+type MintData = {
+  available: number;
+  balance: number;
+};
+
+type Mint = {
+  url: string;
+  available: number;
+  balance: number;
+};
 
 const WalletScreen: React.FC = () => {
   // Balance state
@@ -43,9 +54,14 @@ const WalletScreen: React.FC = () => {
   // New receive state
   const [receiveAmount, setReceiveAmount] = useState('');
   const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
+  const [invoiceId, setInvoiceId] = useState<string | null>(null);
 
-  const [availableMints, setAvailableMints] = useState<any[]>([]);
+  const [availableMints, setAvailableMints] = useState<Mint[]>([]);
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
+
+  // Add state
+  const [checkingInvoice, setCheckingInvoice] = useState(false);
+  const [invoicePaid, setInvoicePaid] = useState(false);
 
   const navigation = useNavigation();
 
@@ -85,9 +101,15 @@ const WalletScreen: React.FC = () => {
   const fetchMints = async () => {
     const data = await getBalance();
     if (data.mints) {
-      const mintList = Object.keys(data.mints);
+      const mintList = Object.entries(data.mints as Record<string, MintData>).map(([url, data]) => ({
+        url,
+        available: data.available,
+        balance: data.balance
+      }));
       setAvailableMints(mintList);
-      setSelectedMint(mintList[0]);
+      if (mintList.length > 0) {
+        setSelectedMint(mintList[0].url);
+      }
     }
   };
 
@@ -130,13 +152,38 @@ const WalletScreen: React.FC = () => {
     setReceiveLoading(true);
     setReceiveError(null);
     setGeneratedInvoice(null);
+    setInvoiceId(null);
+    setCheckingInvoice(false);
+    setInvoicePaid(false);
     try {
       const data = await createLightningInvoice(Number(receiveAmount), selectedMint);
       setGeneratedInvoice(data.payment_request || data.invoice || JSON.stringify(data));
-      // Wait a few seconds, then refresh balance (to allow for payment processing)
-      setTimeout(() => {
-        fetchBalance();
-      }, 5000); // 5 seconds, adjust as needed
+      if (data.quote) setInvoiceId(data.quote);
+      setCheckingInvoice(true);
+      let pollCount = 0;
+      const maxPolls = 60; // 5 minutes if polling every 5 seconds
+
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+          // Call your backend to check invoice status
+          const status = await checkInvoiceStatus(data.payment_request, selectedMint);
+          if (status && status.result === 'SETTLED') {
+            clearInterval(pollInterval);
+            setCheckingInvoice(false);
+            setInvoicePaid(true);
+            fetchBalance();
+            setReceiveResult('Payment received and tokens claimed successfully!');
+          }
+        } catch (error) {
+          // handle error if needed
+        }
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          setCheckingInvoice(false);
+        }
+      }, 5000);
+
     } catch (err: any) {
       setReceiveError(err.message || 'Failed to generate invoice');
     } finally {
@@ -190,57 +237,80 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
-  const renderReceive = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.title}>Receive Payment</Text>
-      
-      <View style={styles.mintSelector}>
-        <Text style={styles.mintLabel}>Select Mint:</Text>
-        <Picker
-          selectedValue={selectedMint}
-          onValueChange={setSelectedMint}
-          style={styles.picker}
-        >
-          {availableMints.map((mint) => (
-            <Picker.Item 
-              key={mint} 
-              label={mint} 
-              value={mint}
-            />
-          ))}
-        </Picker>
-      </View>
+  const renderReceive = () => {
+    // Find the selected mint object
+    const selectedMintObj = availableMints.find(m => m.url === selectedMint);
+    return (
+      <View style={styles.tabContent}>
+        <Text style={styles.title}>Receive Payment</Text>
 
-      <Text style={styles.selectedMint}>
-        Selected Mint: {selectedMint}
-      </Text>
+        {/* Show selected mint's balance and URL */}
+        {selectedMintObj && (
+          <View style={styles.selectedMintBox}>
+            <Text style={styles.selectedMintLabel}>Selected Mint:</Text>
+            <Text style={styles.selectedMintUrl}>{selectedMintObj.url}</Text>
+            <Text style={styles.selectedMintBalance}>Balance: {selectedMintObj.available} sat (pending: {selectedMintObj.balance - selectedMintObj.available} sat)</Text>
+          </View>
+        )}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Amount (sats)"
-        keyboardType="numeric"
-        value={receiveAmount}
-        onChangeText={setReceiveAmount}
-      />
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleGenerateInvoice}
-        disabled={receiveLoading || !receiveAmount}
-      >
-        <Text style={styles.buttonText}>Generate Invoice</Text>
-      </TouchableOpacity>
-
-      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
-      {generatedInvoice && (
-        <View style={styles.tokenBox}>
-          <Text style={styles.tokenLabel}>Invoice for {selectedMint}:</Text>
-          <Text selectable style={styles.token}>{generatedInvoice}</Text>
+        <View style={styles.mintSelector}>
+          <Text style={styles.mintLabel}>Select Mint:</Text>
+          <Picker
+            selectedValue={selectedMint}
+            onValueChange={setSelectedMint}
+            style={styles.picker}
+          >
+            {availableMints.map((mint) => (
+              <Picker.Item 
+                key={mint.url} 
+                label={`${mint.url} (${mint.available} sat)`}
+                value={mint.url}
+              />
+            ))}
+          </Picker>
         </View>
-      )}
-    </View>
-  );
+
+        <TextInput
+          style={styles.input}
+          placeholder="Amount (sats)"
+          keyboardType="numeric"
+          value={receiveAmount}
+          onChangeText={setReceiveAmount}
+        />
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleGenerateInvoice}
+          disabled={receiveLoading || !receiveAmount}
+        >
+          <Text style={styles.buttonText}>Generate Invoice</Text>
+        </TouchableOpacity>
+
+        {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
+        {receiveError && <Text style={styles.error}>{receiveError}</Text>}
+        {generatedInvoice && selectedMintObj && (
+          <View style={styles.tokenBox}>
+            <Text style={styles.tokenLabel}>Requesting invoice for {receiveAmount} sat.</Text>
+            <Text style={styles.tokenLabel}>Pay invoice to mint {selectedMintObj.url} {receiveAmount} sat:</Text>
+            <Text style={styles.tokenLabel}>Invoice:</Text>
+            <Text selectable style={styles.token}>{generatedInvoice}</Text>
+            {invoiceId && (
+              <Text style={styles.invoiceCmd}>
+                You can use this command to check the invoice: cashu invoice {receiveAmount} --id {invoiceId}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {checkingInvoice && (
+          <Text style={styles.checkingInvoice}>Checking invoice...</Text>
+        )}
+        {invoicePaid && (
+          <Text style={styles.invoicePaid}>Invoice paid!</Text>
+        )}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -408,17 +478,76 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#333',
   },
-  selectedMint: {
-    fontSize: 14,
-    color: '#666',
+  selectedMintBox: {
     marginBottom: 20,
-    textAlign: 'center',
     padding: 10,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectedMintLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  selectedMintUrl: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginBottom: 5,
+  },
+  selectedMintBalance: {
+    fontSize: 14,
+    color: '#333',
   },
   picker: {
     width: '100%',
+  },
+  mintBalances: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+  },
+  mintBalancesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  mintBalanceItem: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  mintBalanceText: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  mintUrl: {
+    fontSize: 12,
+    color: '#666',
+  },
+  invoiceCmd: {
+    marginTop: 10,
+    fontSize: 13,
+    color: '#555',
+    fontStyle: 'italic',
+  },
+  checkingInvoice: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#007AFF',
+    textAlign: 'center',
+  },
+  invoicePaid: {
+    marginTop: 20,
+    fontSize: 16,
+    color: 'green',
+    textAlign: 'center',
   },
 });
 
