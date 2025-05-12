@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://10.0.2.2:3337'; // Android emulator localhost address for wallet API
+const API_URL = 'http://10.0.2.2:4448'; // Android emulator localhost address for wallet API
 
 const api = axios.create({
   baseURL: API_URL,

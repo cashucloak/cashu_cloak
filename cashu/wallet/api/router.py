@@ -224,11 +224,14 @@ async def swap(
     response_model=BalanceResponse,
 )
 async def balance():
-    await wallet.load_proofs(reload=True)
+    await wallet.load_proofs(reload=True, all_keysets=True)
     keyset_balances = wallet.balance_per_keyset()
     mint_balances = await wallet.balance_per_minturl()
+    # preferred_mint = "https://testnut.cashu.space"
+    preferred_mint = "https://8333.space:3338"
+    filtered_mints = {preferred_mint: mint_balances[preferred_mint]} if preferred_mint in mint_balances else {}
     return BalanceResponse(
-        balance=wallet.available_balance, keysets=keyset_balances, mints=mint_balances
+        balance=wallet.available_balance, keysets=keyset_balances, mints=filtered_mints
     )
 
 

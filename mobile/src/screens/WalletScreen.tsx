@@ -9,12 +9,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu, payLightningInvoice } from '../services/api';
+import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
-type Tab = 'balance' | 'send' | 'pay';
+type Tab = 'balance' | 'send' | 'receive';
 
 const WalletScreen: React.FC = () => {
   // Balance state
@@ -30,14 +31,21 @@ const WalletScreen: React.FC = () => {
   const [sendLoading, setSendLoading] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
-  // Pay state
+  // Receive state (was Pay)
   const [invoice, setInvoice] = useState('');
-  const [payResult, setPayResult] = useState<string | null>(null);
-  const [payLoading, setPayLoading] = useState(false);
-  const [payError, setPayError] = useState<string | null>(null);
+  const [receiveResult, setReceiveResult] = useState<string | null>(null);
+  const [receiveLoading, setReceiveLoading] = useState(false);
+  const [receiveError, setReceiveError] = useState<string | null>(null);
 
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('balance');
+
+  // New receive state
+  const [receiveAmount, setReceiveAmount] = useState('');
+  const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
+
+  const [availableMints, setAvailableMints] = useState<any[]>([]);
+  const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
 
   const navigation = useNavigation();
 
@@ -48,11 +56,18 @@ const WalletScreen: React.FC = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'receive') {
+      fetchMints();
+    }
+  }, [activeTab]);
+
   const fetchBalance = async () => {
     try {
       setBalanceLoading(true);
       setBalanceError(null);
       const data = await getBalance();
+      // Only show the balance for the target mint
       if (data.mints && data.mints[TARGET_MINT]) {
         setBalance(data.mints[TARGET_MINT].available);
         setPending(data.mints[TARGET_MINT].balance - data.mints[TARGET_MINT].available);
@@ -64,6 +79,15 @@ const WalletScreen: React.FC = () => {
       setBalanceError(err.message || 'Failed to fetch balance');
     } finally {
       setBalanceLoading(false);
+    }
+  };
+
+  const fetchMints = async () => {
+    const data = await getBalance();
+    if (data.mints) {
+      const mintList = Object.keys(data.mints);
+      setAvailableMints(mintList);
+      setSelectedMint(mintList[0]);
     }
   };
 
@@ -85,26 +109,43 @@ const WalletScreen: React.FC = () => {
     }
   };
 
-  const handlePay = async () => {
-    setPayLoading(true);
-    setPayError(null);
-    setPayResult(null);
+  const handleReceive = async () => {
+    setReceiveLoading(true);
+    setReceiveError(null);
+    setReceiveResult(null);
     try {
       const data = await payLightningInvoice(invoice);
-      setPayResult(JSON.stringify(data));
+      setReceiveResult(JSON.stringify(data));
       setInvoice('');
-      // Refresh balance after paying
+      // Refresh balance after receiving
       fetchBalance();
     } catch (err: any) {
-      setPayError(err.message || 'Failed to pay invoice');
+      setReceiveError(err.message || 'Failed to process invoice');
     } finally {
-      setPayLoading(false);
+      setReceiveLoading(false);
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    setReceiveLoading(true);
+    setReceiveError(null);
+    setGeneratedInvoice(null);
+    try {
+      const data = await createLightningInvoice(Number(receiveAmount), selectedMint);
+      setGeneratedInvoice(data.payment_request || data.invoice || JSON.stringify(data));
+      // Wait a few seconds, then refresh balance (to allow for payment processing)
+      setTimeout(() => {
+        fetchBalance();
+      }, 5000); // 5 seconds, adjust as needed
+    } catch (err: any) {
+      setReceiveError(err.message || 'Failed to generate invoice');
+    } finally {
+      setReceiveLoading(false);
     }
   };
 
   const renderBalance = () => (
     <View style={styles.tabContent}>
-      <Text style={styles.mint}>{TARGET_MINT}</Text>
       {balanceLoading ? (
         <ActivityIndicator size="large" color="#007AFF" />
       ) : balanceError ? (
@@ -115,6 +156,9 @@ const WalletScreen: React.FC = () => {
           <Text style={styles.pending}>Pending: {pending} sat</Text>
         </>
       )}
+      <TouchableOpacity style={styles.button} onPress={fetchBalance}>
+        <Text style={styles.buttonText}>Refresh Balance</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -146,24 +190,55 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
-  const renderPay = () => (
+  const renderReceive = () => (
     <View style={styles.tabContent}>
+      <Text style={styles.title}>Receive Payment</Text>
+      
+      <View style={styles.mintSelector}>
+        <Text style={styles.mintLabel}>Select Mint:</Text>
+        <Picker
+          selectedValue={selectedMint}
+          onValueChange={setSelectedMint}
+          style={styles.picker}
+        >
+          {availableMints.map((mint) => (
+            <Picker.Item 
+              key={mint} 
+              label={mint} 
+              value={mint}
+            />
+          ))}
+        </Picker>
+      </View>
+
+      <Text style={styles.selectedMint}>
+        Selected Mint: {selectedMint}
+      </Text>
+
       <TextInput
         style={styles.input}
-        placeholder="Paste Lightning invoice"
-        value={invoice}
-        onChangeText={setInvoice}
+        placeholder="Amount (sats)"
+        keyboardType="numeric"
+        value={receiveAmount}
+        onChangeText={setReceiveAmount}
       />
+
       <TouchableOpacity
         style={styles.button}
-        onPress={handlePay}
-        disabled={payLoading || !invoice}
+        onPress={handleGenerateInvoice}
+        disabled={receiveLoading || !receiveAmount}
       >
-        <Text style={styles.buttonText}>Pay</Text>
+        <Text style={styles.buttonText}>Generate Invoice</Text>
       </TouchableOpacity>
-      {payLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {payError && <Text style={styles.error}>{payError}</Text>}
-      {payResult && <Text style={styles.success}>{payResult}</Text>}
+
+      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
+      {generatedInvoice && (
+        <View style={styles.tokenBox}>
+          <Text style={styles.tokenLabel}>Invoice for {selectedMint}:</Text>
+          <Text selectable style={styles.token}>{generatedInvoice}</Text>
+        </View>
+      )}
     </View>
   );
 
@@ -188,11 +263,11 @@ const WalletScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'pay' && styles.activeTab]}
-          onPress={() => setActiveTab('pay')}
+          style={[styles.tab, activeTab === 'receive' && styles.activeTab]}
+          onPress={() => setActiveTab('receive')}
         >
-          <Text style={[styles.tabText, activeTab === 'pay' && styles.activeTabText]}>
-            Pay
+          <Text style={[styles.tabText, activeTab === 'receive' && styles.activeTabText]}>
+            Receive
           </Text>
         </TouchableOpacity>
       </View>
@@ -200,7 +275,7 @@ const WalletScreen: React.FC = () => {
       <ScrollView style={styles.content}>
         {activeTab === 'balance' && renderBalance()}
         {activeTab === 'send' && renderSend()}
-        {activeTab === 'pay' && renderPay()}
+        {activeTab === 'receive' && renderReceive()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -302,6 +377,48 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     textAlign: 'center',
+  },
+  tokenBox: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+  },
+  tokenLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666',
+    marginBottom: 10,
+  },
+  token: {
+    fontSize: 16,
+    color: '#666',
+  },
+  mintSelector: {
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+  },
+  mintLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  selectedMint: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  picker: {
+    width: '100%',
   },
 });
 

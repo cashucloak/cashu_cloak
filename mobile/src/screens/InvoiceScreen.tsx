@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,38 +8,76 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { createLightningInvoice, payLightningInvoice } from '../services/api';
+import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice } from '../services/api';
 
-type Tab = 'request' | 'receive';
+type Tab = 'send' | 'receive';
 
 const InvoiceScreen: React.FC = () => {
-  // Request state
-  const [requestAmount, setRequestAmount] = useState('');
-  const [requestInvoice, setRequestInvoice] = useState<string | null>(null);
-  const [requestLoading, setRequestLoading] = useState(false);
-  const [requestError, setRequestError] = useState<string | null>(null);
+  // Send state
+  const [sendAmount, setSendAmount] = useState('');
+  const [sendToken, setSendToken] = useState<string | null>(null);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [mints, setMints] = useState<any[]>([]);
+  const [selectedMint, setSelectedMint] = useState<string | null>(null);
+  const [mintLoading, setMintLoading] = useState(true);
 
   // Receive state
   const [lightningInvoice, setLightningInvoice] = useState('');
   const [receiveResult, setReceiveResult] = useState<string | null>(null);
   const [receiveLoading, setReceiveLoading] = useState(false);
   const [receiveError, setReceiveError] = useState<string | null>(null);
+  const [receiveAmount, setReceiveAmount] = useState('');
 
   // Active tab
-  const [activeTab, setActiveTab] = useState<Tab>('request');
+  const [activeTab, setActiveTab] = useState<Tab>('send');
 
-  const handleRequest = async () => {
-    setRequestLoading(true);
-    setRequestError(null);
-    setRequestInvoice(null);
+  useEffect(() => {
+    if (activeTab === 'send') {
+      fetchMints();
+    }
+  }, [activeTab]);
+
+  const fetchMints = async () => {
+    setMintLoading(true);
     try {
-      const data = await createLightningInvoice(Number(requestAmount));
-      setRequestInvoice(data.payment_request || data.invoice || JSON.stringify(data));
-    } catch (err: any) {
-      setRequestError(err.message || 'Failed to generate invoice');
+      const data = await getBalance();
+      if (data.mints) {
+        const mintList = Object.entries(data.mints).map(([url, info]: any) => ({
+          url,
+          ...info,
+        }));
+        setMints(mintList);
+        // Default to mint with largest balance
+        if (mintList.length > 0) {
+          const largest = mintList.reduce((a, b) => (a.available > b.available ? a : b));
+          setSelectedMint(largest.url);
+        }
+      } else {
+        setMints([]);
+        setSelectedMint(null);
+      }
+    } catch (err) {
+      setMints([]);
+      setSelectedMint(null);
     } finally {
-      setRequestLoading(false);
+      setMintLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    setSendLoading(true);
+    setSendError(null);
+    setSendToken(null);
+    try {
+      const data = await sendCashu(Number(sendAmount), '', selectedMint || undefined);
+      setSendToken(data.token || JSON.stringify(data));
+    } catch (err: any) {
+      setSendError(err.message || 'Failed to send token');
+    } finally {
+      setSendLoading(false);
     }
   };
 
@@ -58,50 +96,107 @@ const InvoiceScreen: React.FC = () => {
     }
   };
 
-  const renderRequest = () => (
+  const handleGenerateInvoice = async () => {
+    setReceiveLoading(true);
+    setReceiveError(null);
+    setReceiveResult(null);
+    try {
+      const data = await createLightningInvoice(Number(receiveAmount), selectedMint || undefined);
+      setReceiveResult(data.invoice || JSON.stringify(data));
+    } catch (err: any) {
+      setReceiveError(err.message || 'Failed to generate invoice');
+    } finally {
+      setReceiveLoading(false);
+    }
+  };
+
+  const renderSend = () => (
     <View style={styles.tabContent}>
-      <Text style={styles.title}>Create Invoice</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Amount (sats)"
-        keyboardType="numeric"
-        value={requestAmount}
-        onChangeText={setRequestAmount}
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleRequest}
-        disabled={requestLoading || !requestAmount}
-      >
-        <Text style={styles.buttonText}>Generate Invoice</Text>
-      </TouchableOpacity>
-      {requestLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {requestError && <Text style={styles.error}>{requestError}</Text>}
-      {requestInvoice && <Text style={styles.invoice}>{requestInvoice}</Text>}
+      {mintLoading ? (
+        <ActivityIndicator size="large" color="#007AFF" />
+      ) : mints.length === 0 ? (
+        <Text style={styles.error}>No mints available</Text>
+      ) : (
+        <>
+          <Text style={styles.title}>Send Cashu Token</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Amount (sats)"
+            keyboardType="numeric"
+            value={sendAmount}
+            onChangeText={setSendAmount}
+          />
+          {mints.length > 1 && (
+            <View style={styles.pickerWrapper}>
+              <Text style={styles.pickerLabel}>Select Mint:</Text>
+              <Picker
+                selectedValue={selectedMint}
+                style={styles.picker}
+                onValueChange={setSelectedMint}
+              >
+                {mints.map((mint) => (
+                  <Picker.Item
+                    key={mint.url}
+                    label={`${mint.url} (Balance: ${mint.available} sat)`}
+                    value={mint.url}
+                  />
+                ))}
+              </Picker>
+            </View>
+          )}
+          {mints.length === 1 && (
+            <Text style={styles.pickerLabel}>
+              Mint: {mints[0].url} (Balance: {mints[0].available} sat)
+            </Text>
+          )}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleSend}
+            disabled={sendLoading || !sendAmount || !selectedMint}
+          >
+            <Text style={styles.buttonText}>Send</Text>
+          </TouchableOpacity>
+          {sendLoading && <ActivityIndicator size="large" color="#007AFF" />}
+          {sendError && <Text style={styles.error}>{sendError}</Text>}
+          {sendToken && (
+            <View style={styles.tokenBox}>
+              <Text style={styles.tokenLabel}>Token:</Text>
+              <Text selectable style={styles.token}>{sendToken}</Text>
+            </View>
+          )}
+        </>
+      )}
     </View>
   );
 
   const renderReceive = () => (
     <View style={styles.tabContent}>
-      <Text style={styles.title}>Receive Invoice</Text>
       <TextInput
-        style={[styles.input, styles.invoiceInput]}
-        placeholder="Paste Lightning Invoice (lnbc...)"
-        value={lightningInvoice}
-        onChangeText={setLightningInvoice}
-        multiline
-        numberOfLines={3}
+        style={styles.input}
+        placeholder="Amount (sats)"
+        keyboardType="numeric"
+        value={receiveAmount}
+        onChangeText={setReceiveAmount}
       />
+      {mints.length > 1 && (
+        <Picker
+          selectedValue={selectedMint}
+          onValueChange={setSelectedMint}
+          style={styles.input}
+        >
+          {mints.map((mint) => (
+            <Picker.Item key={mint.url} label={mint.url} value={mint.url} />
+          ))}
+        </Picker>
+      )}
       <TouchableOpacity
         style={styles.button}
-        onPress={handleReceive}
-        disabled={receiveLoading || !lightningInvoice}
+        onPress={handleGenerateInvoice}
+        disabled={receiveLoading || !receiveAmount}
       >
-        <Text style={styles.buttonText}>Process Invoice</Text>
+        <Text style={styles.buttonText}>Generate Invoice</Text>
       </TouchableOpacity>
-      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
-      {receiveResult && <Text style={styles.invoice}>{receiveResult}</Text>}
+      {/* ...rest of your code */}
     </View>
   );
 
@@ -109,11 +204,11 @@ const InvoiceScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.tabBar}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'request' && styles.activeTab]}
-          onPress={() => setActiveTab('request')}
+          style={[styles.tab, activeTab === 'send' && styles.activeTab]}
+          onPress={() => setActiveTab('send')}
         >
-          <Text style={[styles.tabText, activeTab === 'request' && styles.activeTabText]}>
-            Request
+          <Text style={[styles.tabText, activeTab === 'send' && styles.activeTabText]}>
+            Send
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -127,7 +222,7 @@ const InvoiceScreen: React.FC = () => {
       </View>
 
       <ScrollView style={styles.content}>
-        {activeTab === 'request' && renderRequest()}
+        {activeTab === 'send' && renderSend()}
         {activeTab === 'receive' && renderReceive()}
       </ScrollView>
     </SafeAreaView>
@@ -223,6 +318,35 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     textAlign: 'center',
+  },
+  pickerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    marginRight: 10,
+  },
+  picker: {
+    flex: 1,
+  },
+  tokenBox: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  tokenLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  token: {
+    fontSize: 16,
+    color: '#333',
   },
 });
 
