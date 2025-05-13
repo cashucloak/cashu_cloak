@@ -242,16 +242,6 @@ const WalletScreen: React.FC = () => {
     const selectedMintObj = availableMints.find(m => m.url === selectedMint);
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.title}>Receive Payment</Text>
-
-        {/* Show selected mint's balance and URL */}
-        {selectedMintObj && (
-          <View style={styles.selectedMintBox}>
-            <Text style={styles.selectedMintLabel}>Selected Mint:</Text>
-            <Text style={styles.selectedMintUrl}>{selectedMintObj.url}</Text>
-            <Text style={styles.selectedMintBalance}>Balance: {selectedMintObj.available} sat (pending: {selectedMintObj.balance - selectedMintObj.available} sat)</Text>
-          </View>
-        )}
 
         <View style={styles.mintSelector}>
           <Text style={styles.mintLabel}>Select Mint:</Text>
