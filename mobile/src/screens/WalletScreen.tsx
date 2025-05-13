@@ -15,7 +15,7 @@ import { Picker } from '@react-native-picker/picker';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
-type Tab = 'balance' | 'send' | 'receive';
+type Tab = 'balance' | 'send' | 'invoice';
 
 type MintData = {
   available: number;
@@ -43,9 +43,9 @@ const WalletScreen: React.FC = () => {
 
   // Receive state (was Pay)
   const [invoice, setInvoice] = useState('');
-  const [receiveResult, setReceiveResult] = useState<string | null>(null);
-  const [receiveLoading, setReceiveLoading] = useState(false);
-  const [receiveError, setReceiveError] = useState<string | null>(null);
+  const [invoiceResult, setInvoiceResult] = useState<string | null>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
 
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('balance');
@@ -72,7 +72,7 @@ const WalletScreen: React.FC = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'receive') {
+    if (activeTab === 'invoice') {
       fetchMints();
     }
   }, [activeTab]);
@@ -128,26 +128,26 @@ const WalletScreen: React.FC = () => {
     }
   };
 
-  const handleReceive = async () => {
-    setReceiveLoading(true);
-    setReceiveError(null);
-    setReceiveResult(null);
+  const handleInvoice = async () => {
+    setInvoiceLoading(true);
+    setInvoiceError(null);
+    setInvoiceResult(null);
     try {
       const data = await payLightningInvoice(invoice);
-      setReceiveResult(JSON.stringify(data));
+      setInvoiceResult(JSON.stringify(data));
       setInvoice('');
       // Refresh balance after receiving
       fetchBalance();
     } catch (err: any) {
-      setReceiveError(err.message || 'Failed to process invoice');
+      setInvoiceError(err.message || 'Failed to process invoice');
     } finally {
-      setReceiveLoading(false);
+      setInvoiceLoading(false);
     }
   };
 
   const handleGenerateInvoice = async () => {
-    setReceiveLoading(true);
-    setReceiveError(null);
+    setInvoiceLoading(true);
+    setInvoiceError(null);
     setGeneratedInvoice(null);
     setInvoiceId(null);
     setCheckingInvoice(false);
@@ -170,7 +170,7 @@ const WalletScreen: React.FC = () => {
             setCheckingInvoice(false);
             setInvoicePaid(true);
             fetchBalance();
-            setReceiveResult('Payment received and tokens claimed successfully!');
+            setInvoiceResult('Payment received and tokens claimed successfully!');
           }
         } catch (error) {
           // handle error if needed
@@ -182,9 +182,9 @@ const WalletScreen: React.FC = () => {
       }, 5000);
 
     } catch (err: any) {
-      setReceiveError(err.message || 'Failed to generate invoice');
+      setInvoiceError(err.message || 'Failed to generate invoice');
     } finally {
-      setReceiveLoading(false);
+      setInvoiceLoading(false);
     }
   };
 
@@ -233,7 +233,7 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
-  const renderReceive = () => {
+  const renderInvoice = () => {
     // Find the selected mint object
     const selectedMintObj = availableMints.find(m => m.url === selectedMint);
     return (
@@ -249,13 +249,13 @@ const WalletScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.button}
           onPress={handleGenerateInvoice}
-          disabled={receiveLoading || !receiveAmount}
+          disabled={invoiceLoading || !receiveAmount}
         >
           <Text style={styles.buttonText}>Generate Invoice</Text>
         </TouchableOpacity>
 
-        {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
-        {receiveError && <Text style={styles.error}>{receiveError}</Text>}
+        {invoiceLoading && <ActivityIndicator size="large" color="#007AFF" />}
+        {invoiceError && <Text style={styles.error}>{invoiceError}</Text>}
         {generatedInvoice && selectedMintObj && (
           <View style={styles.tokenBox}>
             <Text style={styles.tokenLabel}>Invoice</Text>
@@ -299,11 +299,11 @@ const WalletScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'receive' && styles.activeTab]}
-          onPress={() => setActiveTab('receive')}
+          style={[styles.tab, activeTab === 'invoice' && styles.activeTab]}
+          onPress={() => setActiveTab('invoice')}
         >
-          <Text style={[styles.tabText, activeTab === 'receive' && styles.activeTabText]}>
-            Receive
+          <Text style={[styles.tabText, activeTab === 'invoice' && styles.activeTabText]}>
+            Invoice
           </Text>
         </TouchableOpacity>
       </View>
@@ -311,7 +311,7 @@ const WalletScreen: React.FC = () => {
       <ScrollView style={styles.content}>
         {activeTab === 'balance' && renderBalance()}
         {activeTab === 'send' && renderSend()}
-        {activeTab === 'receive' && renderReceive()}
+        {activeTab === 'invoice' && renderInvoice()}
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,5 +1,10 @@
 {
   "devDependencies": {
     "@react-native-community/cli": "^18.0.0"
+  },
+  "dependencies": {
+    "@react-navigation/stack": "^7.3.2",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-screens": "^4.10.0"
   }
 }
