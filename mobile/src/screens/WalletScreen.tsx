@@ -31,7 +31,6 @@ type Mint = {
 const WalletScreen: React.FC = () => {
   // Balance state
   const [balance, setBalance] = useState<number | null>(null);
-  const [pending, setPending] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [balanceError, setBalanceError] = useState<string | null>(null);
 
@@ -86,10 +85,8 @@ const WalletScreen: React.FC = () => {
       // Only show the balance for the target mint
       if (data.mints && data.mints[TARGET_MINT]) {
         setBalance(data.mints[TARGET_MINT].available);
-        setPending(data.mints[TARGET_MINT].balance - data.mints[TARGET_MINT].available);
       } else {
         setBalance(0);
-        setPending(0);
       }
     } catch (err: any) {
       setBalanceError(err.message || 'Failed to fetch balance');
@@ -200,7 +197,6 @@ const WalletScreen: React.FC = () => {
       ) : (
         <>
           <Text style={styles.balance}>{balance} sat</Text>
-          <Text style={styles.pending}>Pending: {pending} sat</Text>
         </>
       )}
       <TouchableOpacity style={styles.button} onPress={fetchBalance}>
@@ -376,11 +372,6 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     textAlign: 'center',
     marginBottom: 10,
-  },
-  pending: {
-    fontSize: 16,
-    color: '#FFA500',
-    textAlign: 'center',
   },
   input: {
     width: '100%',
