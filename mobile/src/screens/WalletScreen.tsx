@@ -242,24 +242,6 @@ const WalletScreen: React.FC = () => {
     const selectedMintObj = availableMints.find(m => m.url === selectedMint);
     return (
       <View style={styles.tabContent}>
-
-        <View style={styles.mintSelector}>
-          <Text style={styles.mintLabel}>Select Mint:</Text>
-          <Picker
-            selectedValue={selectedMint}
-            onValueChange={setSelectedMint}
-            style={styles.picker}
-          >
-            {availableMints.map((mint) => (
-              <Picker.Item 
-                key={mint.url} 
-                label={`${mint.url} (${mint.available} sat)`}
-                value={mint.url}
-              />
-            ))}
-          </Picker>
-        </View>
-
         <TextInput
           style={styles.input}
           placeholder="Amount (sats)"
@@ -280,21 +262,19 @@ const WalletScreen: React.FC = () => {
         {receiveError && <Text style={styles.error}>{receiveError}</Text>}
         {generatedInvoice && selectedMintObj && (
           <View style={styles.tokenBox}>
-            <Text style={styles.tokenLabel}>Requesting invoice for {receiveAmount} sat.</Text>
-            <Text style={styles.tokenLabel}>Pay invoice to mint {selectedMintObj.url} {receiveAmount} sat:</Text>
-            <Text style={styles.tokenLabel}>Invoice:</Text>
+            <Text style={styles.tokenLabel}>Invoice</Text>
             <Text selectable style={styles.token}>{generatedInvoice}</Text>
-            {invoiceId && (
+            {/* {invoiceId && (
               <Text style={styles.invoiceCmd}>
-                You can use this command to check the invoice: cashu invoice {receiveAmount} --id {invoiceId}
+                Command to check invoice: cashu invoice {receiveAmount} --id {invoiceId}
               </Text>
-            )}
+            )} */}
           </View>
         )}
 
-        {checkingInvoice && (
+        {/* {checkingInvoice && (
           <Text style={styles.checkingInvoice}>Checking invoice...</Text>
-        )}
+        )} */}
         {invoicePaid && (
           <Text style={styles.invoicePaid}>Invoice paid!</Text>
         )}
