@@ -60,14 +60,11 @@ def hide_token(token: str, image_path: str) -> str:
                 else:
                     break
     
-    # Create output path
-    output_path = os.path.join(os.path.dirname(image_path), 'hidden_' + os.path.basename(image_path))
-    
-    # Save the modified image
+    # Save the modified image (overwrite original)
     stego_img = Image.fromarray(pixels)
-    stego_img.save(output_path)
+    stego_img.save(image_path)
     
-    return output_path
+    return image_path
 
 def reveal_token(image_path: str) -> str:
     """Extract a hidden Cashu token from an image.
@@ -96,4 +93,14 @@ def reveal_token(image_path: str) -> str:
                         message_bytes = int(binary_message, 2).to_bytes((length + 7) // 8, byteorder='big')
                         return message_bytes.decode('utf-8')
     
-    raise ValueError("No token found in image") 
+    raise ValueError("No token found in image")
+
+def hide_token_with_default_dir(token: str, image_path: str) -> str:
+    if not os.path.isabs(image_path):
+        image_path = get_image_path(image_path)
+    return hide_token(token, image_path)
+
+def reveal_token_with_default_dir(image_path: str) -> str:
+    if not os.path.isabs(image_path):
+        image_path = get_image_path(image_path)
+    return reveal_token(image_path) 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {launchImageLibrary, Asset} from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
 
 const HomeScreen: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>('');
   const { loading, error, result, hideToken, revealToken } = useSteganography();
 
   const pickImage = async () => {
@@ -24,7 +25,7 @@ const HomeScreen: React.FC = () => {
   const handleHideToken = async () => {
     if (!selectedImage) return;
     try {
-      await hideToken('your-token-here', selectedImage);
+      await hideToken(message, selectedImage);
       // Handle success
     } catch (err) {
       // Handle error
@@ -54,6 +55,12 @@ const HomeScreen: React.FC = () => {
         {selectedImage && (
           <View style={styles.imageContainer}>
             <Image source={{ uri: selectedImage }} style={styles.image} />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter message to hide"
+              value={message}
+              onChangeText={setMessage}
+            />
             <View style={styles.buttonRow}>
               <TouchableOpacity 
                 style={[styles.button, styles.actionButton]} 
@@ -143,6 +150,14 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f0f0f0',
     borderRadius: 5,
+  },
+  input: {
+    width: '100%',
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    padding: 10,
   },
 });
 
