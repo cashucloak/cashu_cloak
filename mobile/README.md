@@ -1,7 +1,9 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-**Start Wallet**
-```MINT_URL=https://8333.space:3338 poetry run cashu -d```
+**First, Start Wallet**
+```cashu -d```
+
+**Second, Start App** 
 ```cd mobile ```
 ```npx react-native run-android```
 

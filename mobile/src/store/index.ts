@@ -1,14 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import walletReducer from './walletSlice';
 
 // Import reducers (we'll create these next)
 // import authReducer from './slices/authSlice';
-// import walletReducer from './slices/walletSlice';
 
 export const store = configureStore({
   reducer: {
     // auth: authReducer,
-    // wallet: walletReducer,
+    wallet: walletReducer,
   },
 });
 
