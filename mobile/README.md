@@ -1,10 +1,16 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 **First, Start Wallet**
+``` uvicorn cashu.main:app --host 0.0.0.0 --port 4448 ```
+ Why not below anymore? 
 ```cashu -d```
 
-**Second, Start App** 
-```cd mobile ```
+**Second, Start Tor**
+``` brew services start tor ```
+If you want to stop ``` brew services stop tor ```
+
+**Third, Start App** 
+```cd mobile```
 ```npx react-native run-android```
 
 # Getting Started

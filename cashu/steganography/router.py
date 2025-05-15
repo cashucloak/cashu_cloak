@@ -8,27 +8,26 @@ router = APIRouter(prefix="/steganography", tags=["Steganography"])
 
 @router.post("/hide")
 async def hide_token_endpoint(
+    file: UploadFile = File(...),
     token: str = Form(...),
-    image: UploadFile = File(...)
 ):
     try:
         # Create a temporary file to store the uploaded image
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
-            content = await image.read()
+            content = await file.read()
             temp_file.write(content)
             temp_path = temp_file.name
 
         # Hide the token in the image
         result_path = hide_token(token, temp_path)
 
-        # Clean up the temporary file
-        os.unlink(temp_path)
+        # Optionally, clean up the temp file if you want
+        # os.unlink(result_path)
 
-        # Return the modified image
         return FileResponse(
             result_path,
             media_type="image/jpeg",
-            filename="hidden_image.jpg"
+            filename=file.filename
         )
 
     except Exception as e:

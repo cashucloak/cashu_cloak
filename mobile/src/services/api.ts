@@ -21,7 +21,7 @@ export const steganographyService = {
     try {
       const formData = new FormData();
       formData.append('token', token);
-      formData.append('image', {
+      formData.append('file', {
         uri: imageUri,
         type: 'image/jpeg',
         name: 'image.jpg',
@@ -44,7 +44,7 @@ export const steganographyService = {
   revealToken: async (imageUri: string): Promise<SteganographyResponse> => {
     try {
       const formData = new FormData();
-      formData.append('image', {
+      formData.append('file', {
         uri: imageUri,
         type: 'image/jpeg',
         name: 'image.jpg',

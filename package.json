@@ -4,6 +4,9 @@
   },
   "dependencies": {
     "@react-navigation/stack": "^7.3.2",
+    "buffer": "^6.0.3",
+    "react-native-document-picker": "^9.3.1",
+    "react-native-fs": "^2.20.0",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.10.0"
   }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {launchImageLibrary, Asset} from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
@@ -10,15 +10,22 @@ const HomeScreen: React.FC = () => {
   const { loading, error, result, hideToken, revealToken } = useSteganography();
 
   const pickImage = async () => {
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      includeBase64: false,
-      maxHeight: 600,
-      maxWidth: 600,
-      quality: 1,
-    });
-    if (result.assets && result.assets.length > 0) {
-      setSelectedImage(result.assets[0].uri || null);
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        includeBase64: false,
+        maxHeight: 600,
+        maxWidth: 600,
+        quality: 1,
+      });
+      console.log('Image picker result:', result);
+      if (result.assets && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri || null);
+      } else {
+        console.log('No image selected');
+      }
+    } catch (err) {
+      console.error('Error picking image:', err);
     }
   };
 
@@ -44,46 +51,48 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Cashu Cloak</Text>
-        <Text style={styles.subtitle}>Your secure mobile wallet</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Welcome to Cashu Cloak</Text>
+          <Text style={styles.subtitle}>Your secure mobile wallet</Text>
 
-        <TouchableOpacity style={styles.button} onPress={pickImage}>
-          <Text style={styles.buttonText}>Select Image</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>Select Image</Text>
+          </TouchableOpacity>
 
-        {selectedImage && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: selectedImage }} style={styles.image} />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter message to hide"
-              value={message}
-              onChangeText={setMessage}
-            />
-            <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.button, styles.actionButton]} 
-                onPress={handleHideToken}
-                disabled={loading}
-              >
-                <Text style={styles.buttonText}>Hide Token</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.button, styles.actionButton]} 
-                onPress={handleRevealToken}
-                disabled={loading}
-              >
-                <Text style={styles.buttonText}>Reveal Token</Text>
-              </TouchableOpacity>
+          {selectedImage && (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: selectedImage }} style={styles.image} />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter message to hide"
+                value={message}
+                onChangeText={setMessage}
+              />
+              <View style={styles.buttonRow}>
+                <TouchableOpacity 
+                  style={[styles.button, styles.actionButton]} 
+                  onPress={handleHideToken}
+                  disabled={loading}
+                >
+                  <Text style={styles.buttonText}>Hide Token</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.button, styles.actionButton]} 
+                  onPress={handleRevealToken}
+                  disabled={loading}
+                >
+                  <Text style={styles.buttonText}>Reveal Token</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {loading && <ActivityIndicator size="large" color="#0000ff" />}
-        {error && <Text style={styles.error}>{error}</Text>}
-        {result && <Text style={styles.result}>{JSON.stringify(result)}</Text>}
-      </View>
+          {loading && <ActivityIndicator size="large" color="#0000ff" />}
+          {error && <Text style={styles.error}>{error}</Text>}
+          {result && <Text style={styles.result}>Token hidden successfully!</Text>}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -92,6 +101,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
