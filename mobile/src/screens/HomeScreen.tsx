@@ -66,7 +66,23 @@ const HomeScreen: React.FC = () => {
       const newImageUri = await hideToken(invoice, selectedImage);
       setHiddenImageUri(newImageUri);
       
-      Alert.alert('Success!', 'Invoice generated and hidden in the image.');
+      Alert.alert('Success!', 'Invoice generated and hidden in the image.', 
+      //   [
+      //   // check from here 
+      //   { text: 'OK', onPress: () => {
+      //     setSelectedImage(null);
+      //     setSelectedImageType(null);
+      //     setSelectedImageName(null);
+      //     setAmount('');
+      //     setHiddenImageUri(null);
+      //     setInvoiceError(null);
+      //     setGeneratedInvoice(null);
+      //     setInvoicePaid(false);
+      //     setCheckingInvoice(false);
+      //   }}
+      // ]
+    );
+      // check above
       
       // Start checking invoice status
       setCheckingInvoice(true);
@@ -158,16 +174,8 @@ const HomeScreen: React.FC = () => {
             </View>
           )}
 
-          {hiddenImageUri && (
-            <View style={styles.imageContainer}>
-              <Text style={styles.sectionTitle}>Image with Hidden Invoice:</Text>
-              <Image source={{ uri: hiddenImageUri }} style={styles.image} />
-            </View>
-          )}
-
           {invoiceLoading && <ActivityIndicator size="large" color="#0000ff" />}
           {invoiceError && <Text style={styles.error}>{invoiceError}</Text>}
-          {checkingInvoice && <Text style={styles.checkingInvoice}>Checking invoice status...</Text>}
           {invoicePaid && <Text style={styles.invoicePaid}>Invoice paid!</Text>}
         </View>
       </ScrollView>
