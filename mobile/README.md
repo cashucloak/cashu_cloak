@@ -1,5 +1,8 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+**Disconnect VPN**
+If having issues
+
 **First, Start Wallet**
 ``` uvicorn cashu.main:app --host 0.0.0.0 --port 4448 ```
  Why not below anymore? 

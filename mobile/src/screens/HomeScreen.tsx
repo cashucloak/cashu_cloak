@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {launchImageLibrary, Asset} from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
+import RNFS from 'react-native-fs';
+import { NativeModules } from 'react-native';
+import CameraRoll from '@react-native-camera-roll/camera-roll';
 
 const HomeScreen: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageType, setSelectedImageType] = useState<string | null>(null);
+  const [selectedImageName, setSelectedImageName] = useState<string | null>(null);
   const [message, setMessage] = useState<string>('');
   const { loading, error, result, hideToken, revealToken } = useSteganography();
+  const [hiddenImageUri, setHiddenImageUri] = useState<string | null>(null);
+
+  console.log('HomeScreen rendered');
 
   const pickImage = async () => {
     try {
@@ -21,6 +29,8 @@ const HomeScreen: React.FC = () => {
       console.log('Image picker result:', result);
       if (result.assets && result.assets.length > 0) {
         setSelectedImage(result.assets[0].uri || null);
+        setSelectedImageType(result.assets[0].type || 'image/jpeg');
+        setSelectedImageName(result.assets[0].fileName || 'image.jpg');
       } else {
         console.log('No image selected');
       }
@@ -32,21 +42,30 @@ const HomeScreen: React.FC = () => {
   const handleHideToken = async () => {
     if (!selectedImage) return;
     try {
-      await hideToken(message, selectedImage);
-      // Handle success
+      // Make sure selectedImage is a PNG
+      const newImageUri = await hideToken(message, selectedImage); // Calls backend /hide
+      setHiddenImageUri(newImageUri);
+      Alert.alert('Token hidden!', 'A new image with the hidden token has been saved.');
     } catch (err) {
       // Handle error
     }
   };
 
   const handleRevealToken = async () => {
-    if (!selectedImage) return;
+    if (!hiddenImageUri || !selectedImageType || !selectedImageName) return;
     try {
-      await revealToken(selectedImage);
-      // Handle success
+      const result = await revealToken(hiddenImageUri, 'image/png', 'image.png'); // Calls backend /reveal
+      Alert.alert('Token revealed!', result.data.token);
     } catch (err) {
       // Handle error
     }
+  };
+
+  const checkFileExists = async (uri: string) => {
+    const path = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
+    const exists = await RNFS.exists(path);
+    console.log('File exists:', exists);
+    return exists;
   };
 
   return (
@@ -85,6 +104,13 @@ const HomeScreen: React.FC = () => {
                   <Text style={styles.buttonText}>Reveal Token</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          )}
+
+          {hiddenImageUri && (
+            <View style={styles.imageContainer}>
+              <Text>Stego Image (with hidden token):</Text>
+              <Image source={{ uri: hiddenImageUri }} style={styles.image} />
             </View>
           )}
 

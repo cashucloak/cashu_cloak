@@ -1,4 +1,5 @@
 import axios from 'axios';
+import RNFS from 'react-native-fs';
 
 const API_URL = 'http://10.0.2.2:4448'; // Android emulator localhost address for wallet API
 
@@ -17,23 +18,43 @@ export interface SteganographyResponse {
 
 export const steganographyService = {
   // Hide token in image
-  hideToken: async (token: string, imageUri: string): Promise<SteganographyResponse> => {
+  hideToken: async (token: string, imageUri: string): Promise<string> => {
     try {
       const formData = new FormData();
       formData.append('token', token);
       formData.append('file', {
         uri: imageUri,
-        type: 'image/jpeg',
-        name: 'image.jpg',
+        type: 'image/png',
+        name: 'image.png',
       });
 
-      const response = await api.post('/steganography/hide', formData, {
+      // Use fetch for binary response
+      const response = await fetch('http://10.0.2.2:4448/steganography/hide', {
+        method: 'POST',
+        body: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      return response.data;
+      const blob = await response.blob();
+      const path = `${RNFS.DocumentDirectoryPath}/stego_image_${Date.now()}.jpg`;
+      const reader = new FileReader();
+
+      return new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+          const base64data = reader.result?.toString().split(',')[1];
+          if (base64data) {
+            RNFS.writeFile(path, base64data, 'base64')
+              .then(() => resolve('file://' + path))
+              .catch(reject);
+          } else {
+            reject('Failed to read image data');
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
     } catch (error) {
       console.error('Error hiding token:', error);
       throw error;
@@ -41,13 +62,13 @@ export const steganographyService = {
   },
 
   // Reveal token from image
-  revealToken: async (imageUri: string): Promise<SteganographyResponse> => {
+  revealToken: async (imageUri: string, actualType: string, actualName: string): Promise<SteganographyResponse> => {
     try {
       const formData = new FormData();
-      formData.append('file', {
+      formData.append('image', {
         uri: imageUri,
-        type: 'image/jpeg',
-        name: 'image.jpg',
+        type: actualType,
+        name: actualName,
       });
 
       const response = await api.post('/steganography/reveal', formData, {
@@ -58,7 +79,8 @@ export const steganographyService = {
 
       return response.data;
     } catch (error) {
-      console.error('Error revealing token:', error);
+      const err = error as any;
+      console.error('Error revealing token:', JSON.stringify(err.response?.data || err, null, 2));
       throw error;
     }
   },

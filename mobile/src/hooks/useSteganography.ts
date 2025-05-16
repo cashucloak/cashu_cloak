@@ -21,11 +21,11 @@ export const useSteganography = () => {
     }
   };
 
-  const revealToken = async (imageUri: string) => {
+  const revealToken = async (imageUri: string, imageType: string, imageName: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await steganographyService.revealToken(imageUri);
+      const response = await steganographyService.revealToken(imageUri, imageType, imageName);
       setResult(response);
       return response;
     } catch (err) {

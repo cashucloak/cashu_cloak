@@ -35,10 +35,17 @@ def hide_token(token: str, image_path: str) -> str:
     # Convert token to binary
     token_bytes = token.encode('utf-8')
     binary_token = ''.join(format(byte, '08b') for byte in token_bytes)
+    print(f"[hide_token] Token: {token}")
+    print(f"[hide_token] Binary token length: {len(binary_token)} bits")
+    print(f"[hide_token] First 64 bits of binary token: {binary_token[:64]}")
     
     # Load and prepare image
     img = Image.open(image_path)
+    print(f"[DEBUG] Original image mode: {img.mode}")
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
     pixels = np.array(img)
+    print(f"[DEBUG] Pixel array shape: {pixels.shape}")
     
     # Check if image can hold the token
     max_bytes = pixels.size // 8
@@ -48,6 +55,8 @@ def hide_token(token: str, image_path: str) -> str:
     # Add length of message to the beginning
     length = format(len(binary_token), '032b')
     binary_data = length + binary_token
+    print(f"[hide_token] Length prefix (32 bits): {length}")
+    print(f"[hide_token] First 64 bits of binary_data: {binary_data[:64]}")
     
     # Modify pixels to hide data
     data_index = 0
@@ -62,7 +71,8 @@ def hide_token(token: str, image_path: str) -> str:
     
     # Save the modified image (overwrite original)
     stego_img = Image.fromarray(pixels)
-    stego_img.save(image_path)
+    stego_img.save(image_path, format='PNG')
+    print(f"[hide_token] Saving stego image to: {image_path}")
     
     return image_path
 
@@ -77,7 +87,11 @@ def reveal_token(image_path: str) -> str:
     """
     # Load image
     img = Image.open(image_path)
+    print(f"[DEBUG] Original image mode: {img.mode}")
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
     pixels = np.array(img)
+    print(f"[DEBUG] Pixel array shape: {pixels.shape}")
     
     # Extract the binary data
     binary_data = ''
@@ -85,13 +99,18 @@ def reveal_token(image_path: str) -> str:
         for j in range(pixels.shape[1]):
             for k in range(pixels.shape[2]):
                 binary_data += str(pixels[i, j, k] & 1)
-                if len(binary_data) >= 32:  # First get the length
+                if len(binary_data) == 32:
+                    print(f"[reveal_token] First 32 bits (length prefix): {binary_data}")
                     length = int(binary_data[:32], 2)
-                    if len(binary_data) >= 32 + length:  # Then get the message
-                        binary_message = binary_data[32:32+length]
-                        # Convert binary message to bytes
-                        message_bytes = int(binary_message, 2).to_bytes((length + 7) // 8, byteorder='big')
-                        return message_bytes.decode('utf-8')
+                    print(f"[reveal_token] Length to extract: {length} bits")
+                if len(binary_data) >= 32 + 8 and 'length' in locals():
+                    # Print the first 64 bits for sanity
+                    print(f"[reveal_token] First 64 bits of binary_data: {binary_data[:64]}")
+                if len(binary_data) >= 32 + length if 'length' in locals() else False:
+                    binary_message = binary_data[32:32+length]
+                    message_bytes = int(binary_message, 2).to_bytes((length + 7) // 8, byteorder='big')
+                    print(f"[reveal_token] Reading image: {image_path}")
+                    return message_bytes.decode('utf-8')
     
     raise ValueError("No token found in image")
 
