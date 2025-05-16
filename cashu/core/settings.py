@@ -157,10 +157,10 @@ class MintInformation(CashuSettings):
 
 
 class WalletSettings(CashuSettings):
-    tor: bool = Field(default=False)
+    tor: bool = Field(default=True, env="CASHU_TOR")
     socks_host: str = Field(default=None)  # deprecated
     socks_port: int = Field(default=9050)  # deprecated
-    socks_proxy: str = Field(default=None)
+    socks_proxy: str = Field(default="127.0.0.1:9050", env="CASHU_SOCKS_PROXY")
     http_proxy: str = Field(default=None)
     mint_url: str = Field(default=None)
     mint_host: str = Field(default="8333.space")

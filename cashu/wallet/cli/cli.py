@@ -60,6 +60,7 @@ from ..helpers import (
 from ..nostr import receive_nostr, send_nostr
 from ..subscriptions import SubscriptionManager
 from ...steganography import hide_token, reveal_token
+from ...steganography.core import hide_token_with_default_dir, reveal_token_with_default_dir
 
 
 class NaturalOrderGroup(click.Group):
@@ -690,7 +691,7 @@ async def send_command(
                         print("Please enter a valid number.")
                 
                 try:
-                    output_path = hide_token(token, selected_image)
+                    output_path = hide_token_with_default_dir(token, selected_image)
                     print(f"\nToken successfully hidden in image: {output_path}")
                     print("\nYou can reveal this token later using: cashu reveal <image_name>")
                 except Exception as e:
@@ -1247,7 +1248,7 @@ async def selfpay(ctx: Context, all: bool = False):
 async def hide_token_command(ctx: Context, token: str, image: str):
     """Hide a Cashu token in an image using steganography."""
     try:
-        output_path = hide_token(token, image)
+        output_path = hide_token_with_default_dir(token, image)
         print(f"Token successfully hidden in image: {output_path}")
     except Exception as e:
         print(f"Error hiding token: {e}")
@@ -1260,10 +1261,9 @@ async def hide_token_command(ctx: Context, token: str, image: str):
 async def reveal_token_command(ctx: Context, image: str):
     """Extract a Cashu token from an image."""
     try:
-        token = reveal_token(image)
+        token = reveal_token_with_default_dir(image)
         print("Found token in image:")
         print(f"\n{token}\n")
-        
         # Ask if user wants to receive the token
         if click.confirm("Would you like to receive this token?", default=True):
             wallet: Wallet = ctx.obj["WALLET"]

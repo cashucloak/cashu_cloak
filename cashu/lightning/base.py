@@ -33,6 +33,7 @@ class InvoiceResponse(BaseModel):
     checking_id: Optional[str] = None
     payment_request: Optional[str] = None
     error_message: Optional[str] = None
+    quote: Optional[str] = None
 
 
 class PaymentResult(Enum):
