@@ -11,7 +11,6 @@ export const useSteganography = () => {
       setLoading(true);
       setError(null);
       const response = await steganographyService.hideToken(token, imageUri);
-      setResult(response);
       return response;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

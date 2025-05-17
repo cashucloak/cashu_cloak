@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
@@ -24,6 +24,10 @@ const GenerateInvoiceScreen = () => {
     }
   };
 
+  useEffect(() => {
+    pickImage();
+  }, []);
+
   const handleGenerateInvoice = async () => {
     if (!selectedImage || !amount) return;
     try {
@@ -31,7 +35,7 @@ const GenerateInvoiceScreen = () => {
       const invoice = data.payment_request || data.invoice || JSON.stringify(data);
       await hideToken(invoice, selectedImage);
       Alert.alert('Success!', 'Invoice generated and hidden in the image.', [
-        { text: 'OK', onPress: () => navigation.navigate('RevealInvoice') }
+        { text: 'OK', onPress: () => navigation.navigate('Home') }
       ]);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to generate invoice');
@@ -41,15 +45,12 @@ const GenerateInvoiceScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Generate & Hide Invoice</Text>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Image</Text>
-      </TouchableOpacity>
       {selectedImage && (
         <Image source={{ uri: selectedImage }} style={styles.image} />
       )}
       <TextInput
         style={styles.input}
-        placeholder="Amount (sats)"
+        placeholder="Input amount (sats) to Invoice"
         keyboardType="numeric"
         value={amount}
         onChangeText={setAmount}
@@ -59,9 +60,12 @@ const GenerateInvoiceScreen = () => {
         onPress={handleGenerateInvoice}
         disabled={loading || !amount || !selectedImage}
       >
-        <Text style={styles.buttonText}>Generate & Hide Invoice</Text>
+        <Text style={styles.buttonText}>Cloak Invoice</Text>
       </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color="#007AFF" />}
+      <TouchableOpacity style={styles.button} onPress={pickImage}>
+        <Text style={styles.buttonText}>Select Different Image</Text>
+      </TouchableOpacity>
+      {loading && <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 20 }} />}
     </ScrollView>
   );
 };
@@ -72,7 +76,16 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#007AFF', padding: 15, borderRadius: 10, marginVertical: 10, width: '100%', alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   image: { width: 300, height: 300, borderRadius: 10, marginBottom: 20 },
-  input: { width: '100%', height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 10, padding: 10, borderRadius: 8 },
+  input: {
+    width: '100%',
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 8,
+    textAlign: 'center',
+  },
 });
 
 export default GenerateInvoiceScreen;

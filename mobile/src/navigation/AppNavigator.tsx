@@ -39,7 +39,11 @@ const TabNavigator = () => (
       tabBarInactiveTintColor: 'gray',
     })}
   >
-    <Tab.Screen name="HomeTab" component={HomeStackScreen} options={{ tabBarLabel: 'Home' }} />
+    <Tab.Screen
+      name="HomeTab"
+      component={HomeStackScreen}
+      options={{ tabBarLabel: 'Home', headerShown: false }}
+    />
     <Tab.Screen name="Wallet" component={WalletScreen} />
     <Tab.Screen name="Invoices" component={InvoiceScreen} />
     <Tab.Screen name="Profile" component={ProfileScreen} />

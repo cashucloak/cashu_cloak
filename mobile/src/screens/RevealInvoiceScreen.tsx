@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
@@ -18,6 +18,10 @@ const RevealInvoiceScreen = () => {
       setSelectedImageName(result.assets[0].fileName || 'image.jpg');
     }
   };
+
+  useEffect(() => {
+    pickImage();
+  }, []);
 
   const handleRevealToken = async () => {
     if (!selectedImage || !selectedImageType || !selectedImageName) return;
@@ -40,9 +44,7 @@ const RevealInvoiceScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Reveal Invoice</Text>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Image</Text>
-      </TouchableOpacity>
+
       {selectedImage && (
         <Image source={{ uri: selectedImage }} style={styles.image} />
       )}
@@ -52,6 +54,9 @@ const RevealInvoiceScreen = () => {
         disabled={loading || !selectedImage}
       >
         <Text style={styles.buttonText}>Reveal Invoice</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={pickImage}>
+        <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color="#007AFF" />}
     </ScrollView>
