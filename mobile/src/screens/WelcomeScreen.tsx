@@ -38,9 +38,9 @@ const WelcomeScreen = () => {
       
       <TouchableOpacity 
         style={styles.button} 
-        onPress={() => navigation.navigate('MainApp')}
+        onPress={() => navigation.navigate('Process')}
       >
-        <Text style={styles.buttonText}>Get Started</Text>
+        <Text style={styles.buttonText}>Next: How It Works</Text>
       </TouchableOpacity>
     </ScrollView>
   );

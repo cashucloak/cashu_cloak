@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getBalance, sendCashu, receiveCashuToken } from '../services/api';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
 
 const TARGET_MINT = 'https://8333.space:3338';
@@ -29,6 +29,8 @@ type Mint = {
 };
 
 const WalletScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+
   // Balance state
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
@@ -377,7 +379,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.m,
     color: theme.colors.text,
-  },
+  }
 });
 
 export default WalletScreen; 

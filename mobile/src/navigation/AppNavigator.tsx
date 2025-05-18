@@ -12,6 +12,7 @@ import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import SendCashuScreen from '../screens/SendCashuScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
+import ProcessScreen from '../screens/ProcessScreen';
 
 // Custom theme that extends the navigation dark theme with our colors
 const CashuTheme = {
@@ -49,6 +50,7 @@ const HomeStackScreen = () => (
 
 const TabNavigator = () => (
   <Tab.Navigator
+    initialRouteName="Wallet"
     screenOptions={({ route }) => ({
       tabBarIcon: ({ color, size }) => {
         let iconName = 'home';
@@ -93,6 +95,8 @@ const AppNavigator = () => {
         }}
       >
         <MainStack.Screen name="Welcome" component={WelcomeScreen} />
+        <MainStack.Screen name="Process" component={ProcessScreen} />
+        <MainStack.Screen name="Wallet" component={WalletScreen} />
         <MainStack.Screen name="MainApp" component={TabNavigator} />
       </MainStack.Navigator>
     </NavigationContainer>
