@@ -1,5 +1,6 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 
 const API_URL = 'http://10.0.2.2:4448'; // Android emulator localhost address for wallet API
 
@@ -46,7 +47,12 @@ export const steganographyService = {
           const base64data = reader.result?.toString().split(',')[1];
           if (base64data) {
             RNFS.writeFile(path, base64data, 'base64')
-              .then(() => resolve('file://' + path))
+              .then(() => {
+                // ts-expect-error: save signature is deprecated but still required for gallery save
+                CameraRoll.save(path, { type: 'photo' })
+                  .then((savedUri) => resolve(savedUri))
+                  .catch(reject);
+              })
               .catch(reject);
           } else {
             reject('Failed to read image data');
@@ -68,7 +74,7 @@ export const steganographyService = {
       formData.append('image', {
         uri: imageUri,
         type: actualType,
-        name: actualName,
+        name: actualName || 'image.png',
       });
 
       const response = await api.post('/steganography/reveal', formData, {
