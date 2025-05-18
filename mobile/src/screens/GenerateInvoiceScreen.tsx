@@ -2,10 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
-import { createLightningInvoice, checkInvoiceStatus } from '../services/api';
+import { createLightningInvoice, getBalance, checkInvoiceStatus } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 
 const TARGET_MINT = 'https://8333.space:3338';
+
+type Mint = {
+  url: string;
+  available: number;
+  balance: number;
+};
 
 const GenerateInvoiceScreen = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -14,6 +21,9 @@ const GenerateInvoiceScreen = () => {
   const [amount, setAmount] = useState('');
   const { loading, hideToken } = useSteganography();
   const navigation = useNavigation<any>();
+  const [availableMints, setAvailableMints] = useState<Mint[]>([]);
+  const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
+  const [mintLoading, setMintLoading] = useState(true);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -26,15 +36,62 @@ const GenerateInvoiceScreen = () => {
 
   useEffect(() => {
     pickImage();
+    fetchMints();
   }, []);
+
+  const fetchMints = async () => {
+    setMintLoading(true);
+    try {
+      const data = await getBalance();
+      if (data.mints) {
+        const mintList = Object.entries(data.mints).map(([url, info]: any) => ({
+          url,
+          ...info,
+        }));
+        setAvailableMints(mintList);
+        if (mintList.length > 0) {
+          setSelectedMint(mintList[0].url);
+        }
+      } else {
+        setAvailableMints([]);
+        setSelectedMint(TARGET_MINT);
+      }
+    } finally {
+      setMintLoading(false);
+    }
+  };
 
   const handleGenerateInvoice = async () => {
     if (!selectedImage || !amount) return;
     try {
-      const data = await createLightningInvoice(Number(amount), TARGET_MINT);
+      const data = await createLightningInvoice(Number(amount), selectedMint);
       const invoice = data.payment_request || data.invoice || JSON.stringify(data);
       await hideToken(invoice, selectedImage);
-      Alert.alert('Success!', 'Invoice generated and hidden in the image.', [
+
+      // Start polling for invoice status
+      let pollCount = 0;
+      const maxPolls = 60; // 5 minutes if polling every 5 seconds
+
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+          const status = await checkInvoiceStatus(invoice, selectedMint);
+          if (status && status.result === 'SETTLED') {
+            clearInterval(pollInterval);
+            Alert.alert('Success!', 'Payment received and tokens claimed successfully!', [
+              { text: 'OK', onPress: () => navigation.navigate('Home') }
+            ]);
+          }
+        } catch (error) {
+          // Optionally handle error
+        }
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+        }
+      }, 5000);
+
+      // Optionally show a message that invoice is being checked
+      Alert.alert('Invoice Generated!', 'Invoice hidden in image. Waiting for payment...', [
         { text: 'OK', onPress: () => navigation.navigate('Home') }
       ]);
     } catch (err: any) {
@@ -55,6 +112,19 @@ const GenerateInvoiceScreen = () => {
         value={amount}
         onChangeText={setAmount}
       />
+      {mintLoading ? (
+        <ActivityIndicator size="large" color="#007AFF" style={{ marginVertical: 10 }} />
+      ) : availableMints.length > 1 ? (
+        <Picker
+          selectedValue={selectedMint}
+          onValueChange={setSelectedMint}
+          style={styles.input}
+        >
+          {availableMints.map((mint) => (
+            <Picker.Item key={mint.url} label={mint.url} value={mint.url} />
+          ))}
+        </Picker>
+      ) : null}
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerateInvoice}
@@ -84,6 +154,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
     borderRadius: 8,
+    textAlign: 'center',
+  },
+  mintLabel: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#333',
     textAlign: 'center',
   },
 });

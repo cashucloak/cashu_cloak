@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice, checkInvoiceStatus } from '../services/api';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
 const TARGET_MINT = 'https://8333.space:3338';
@@ -63,6 +63,7 @@ const WalletScreen: React.FC = () => {
   const [invoicePaid, setInvoicePaid] = useState(false);
 
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   // Fetch balance on mount and when returning to balance tab
   useEffect(() => {
@@ -77,11 +78,18 @@ const WalletScreen: React.FC = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (isFocused) {
+      fetchBalance();
+    }
+  }, [isFocused]);
+
   const fetchBalance = async () => {
     try {
       setBalanceLoading(true);
       setBalanceError(null);
       const data = await getBalance();
+      console.log('Balance response:', data);
       // Only show the balance for the target mint
       if (data.mints && data.mints[TARGET_MINT]) {
         setBalance(data.mints[TARGET_MINT].available);
@@ -115,12 +123,11 @@ const WalletScreen: React.FC = () => {
     setSendError(null);
     setSendSuccess(null);
     try {
-      const data = await sendCashu(Number(amount), recipient);
+      const data = await sendCashu(Number(amount), recipient, selectedMint || undefined);
       setSendSuccess(`Sent ${amount} sats to ${recipient}. Token: ${data.token || JSON.stringify(data)}`);
       setAmount('');
       setRecipient('');
-      // Refresh balance after sending
-      fetchBalance();
+      await fetchBalance();
     } catch (err: any) {
       setSendError(err.message || 'Failed to send sats');
     } finally {
@@ -136,8 +143,7 @@ const WalletScreen: React.FC = () => {
       const data = await payLightningInvoice(invoice);
       setInvoiceResult(JSON.stringify(data));
       setInvoice('');
-      // Refresh balance after receiving
-      fetchBalance();
+      await fetchBalance();
     } catch (err: any) {
       setInvoiceError(err.message || 'Failed to process invoice');
     } finally {
