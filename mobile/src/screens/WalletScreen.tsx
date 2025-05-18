@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getBalance, sendCashu, receiveCashuToken } from '../services/api';
 import { useIsFocused } from '@react-navigation/native';
+import { theme } from '../theme';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
@@ -162,6 +163,7 @@ const WalletScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         placeholder="Amount (sats)"
+        placeholderTextColor={theme.colors.placeholder}
         keyboardType="numeric"
         value={amount}
         onChangeText={setAmount}
@@ -169,6 +171,7 @@ const WalletScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         placeholder="Recipient (pubkey or address)"
+        placeholderTextColor={theme.colors.placeholder}
         value={recipient}
         onChangeText={setRecipient}
       />
@@ -191,6 +194,7 @@ const WalletScreen: React.FC = () => {
       <TextInput
         style={[styles.input, styles.invoiceInput]}
         placeholder="Paste Cashu token here"
+        placeholderTextColor={theme.colors.placeholder}
         multiline
         value={receiveToken}
         onChangeText={setReceiveToken}
@@ -250,121 +254,129 @@ const WalletScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   header: {
-    padding: 20,
+    padding: theme.spacing.m,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: theme.colors.border,
   },
   title: {
-    fontSize: 24,
+    fontSize: theme.typography.fontSizes.xlarge,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: theme.colors.text,
   },
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.card,
   },
   tab: {
     flex: 1,
-    paddingVertical: 15,
+    paddingVertical: theme.spacing.m,
     alignItems: 'center',
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: '#007AFF',
+    borderBottomColor: theme.colors.primary,
   },
   tabText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
   activeTabText: {
-    color: '#007AFF',
+    color: theme.colors.primary,
     fontWeight: '600',
   },
   content: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   tabContent: {
-    padding: 20,
+    padding: theme.spacing.m,
   },
   balance: {
-    fontSize: 32,
+    fontSize: theme.typography.fontSizes.xxlarge,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: theme.colors.primary,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: theme.spacing.s,
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
-    fontSize: 18,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
+    backgroundColor: theme.colors.card,
+    color: theme.colors.text,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
     width: '100%',
     alignItems: 'center',
+    ...theme.shadows.medium,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
     fontWeight: '600',
   },
   success: {
-    marginTop: 20,
-    fontSize: 16,
-    color: 'green',
-    backgroundColor: '#e0ffe0',
-    padding: 10,
-    borderRadius: 8,
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.success,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
   },
   error: {
-    color: 'red',
-    marginTop: 20,
-    fontSize: 16,
+    color: theme.colors.error,
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
     textAlign: 'center',
   },
   tokenBox: {
-    marginTop: 20,
-    padding: 10,
+    marginTop: theme.spacing.m,
+    padding: theme.spacing.m,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.medium,
+    backgroundColor: theme.colors.card,
   },
   tokenLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.fontSizes.small,
     fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 10,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.s,
   },
   token: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
   invoiceInput: {
     height: 100,
     textAlignVertical: 'top',
   },
   invoice: {
-    marginTop: 20,
-    fontSize: 16,
-    color: '#666',
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   titleWithMargin: {
-    fontSize: 24,
+    fontSize: theme.typography.fontSizes.xlarge,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
   },
 });
 

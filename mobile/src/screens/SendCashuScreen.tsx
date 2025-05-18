@@ -4,6 +4,7 @@ import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { sendCashu, steganographyService } from '../services/api';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { theme } from '../theme';
 
 type SendCashuParams = {
   imageUri?: string;
@@ -66,6 +67,7 @@ const SendCashuScreen = () => {
       <TextInput
         style={styles.input}
         placeholder="Amount (sats) to Receive"
+        placeholderTextColor={theme.colors.placeholder}
         keyboardType="numeric"
         value={sendAmount}
         onChangeText={setSendAmount}
@@ -80,7 +82,7 @@ const SendCashuScreen = () => {
       <TouchableOpacity style={styles.button} onPress={pickImage}>
         <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
-      {sendLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {sendLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {sendError && <Text style={styles.error}>{sendError}</Text>}
 
       {/* Modal for displaying the token */}
@@ -112,103 +114,108 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.m,
   },
   title: {
-    fontSize: 24,
+    fontSize: theme.typography.fontSizes.xlarge,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
   },
   image: {
     width: 300,
     height: 300,
-    borderRadius: 10,
-    marginBottom: 20,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: theme.spacing.m,
   },
   input: {
     width: '100%',
     height: 40,
-    borderColor: 'gray',
+    borderColor: theme.colors.border,
     borderWidth: 1,
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: theme.spacing.s,
+    padding: theme.spacing.s,
+    borderRadius: theme.borderRadius.small,
     textAlign: 'center',
+    backgroundColor: theme.colors.card,
+    color: theme.colors.text,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
     width: '100%',
     alignItems: 'center',
+    ...theme.shadows.medium,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
   },
   error: {
-    color: 'red',
-    marginTop: 20,
-    fontSize: 16,
+    color: theme.colors.error,
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
     textAlign: 'center',
   },
   tokenBox: {
-    marginTop: 20,
-    padding: 10,
+    marginTop: theme.spacing.m,
+    padding: theme.spacing.m,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.small,
+    backgroundColor: theme.colors.card,
   },
   tokenLabel: {
-    fontSize: 16,
+    fontSize: theme.typography.fontSizes.medium,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: theme.spacing.s,
+    color: theme.colors.text,
   },
   token: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
   modal: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.large,
     alignItems: 'center',
     minWidth: 300,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    ...theme.shadows.large,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: theme.typography.fontSizes.xlarge,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
   },
   modalMessage: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 16,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.m,
     textAlign: 'center',
   },
   invoiceBox: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.small,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   invoiceText: {
-    fontSize: 16,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
   modalButtonRow: {
     flexDirection: 'row',
@@ -216,10 +223,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   flatButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginHorizontal: 20,
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginHorizontal: theme.spacing.m,
   },
 });
 

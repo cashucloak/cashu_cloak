@@ -4,6 +4,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
+import { theme } from '../theme';
 
 const RevealInvoiceScreen = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -56,7 +57,7 @@ const RevealInvoiceScreen = () => {
       <TouchableOpacity style={styles.button} onPress={pickImage}>
         <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color="#007AFF" />}
+      {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
 
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
@@ -81,59 +82,88 @@ const RevealInvoiceScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  button: { backgroundColor: '#007AFF', padding: 15, borderRadius: 10, marginVertical: 10, width: '100%', alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  image: { width: 300, height: 300, borderRadius: 10, marginBottom: 20 },
+  container: { 
+    flexGrow: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: theme.spacing.m,
+    backgroundColor: theme.colors.background,
+  },
+  title: { 
+    fontSize: theme.typography.fontSizes.xlarge, 
+    fontWeight: 'bold', 
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
+  },
+  button: { 
+    backgroundColor: theme.colors.primary, 
+    padding: theme.spacing.m, 
+    borderRadius: theme.borderRadius.medium, 
+    marginVertical: theme.spacing.s, 
+    width: '100%', 
+    alignItems: 'center',
+    ...theme.shadows.medium,
+  },
+  buttonText: { 
+    color: theme.colors.text, 
+    fontSize: theme.typography.fontSizes.medium, 
+    fontWeight: 'bold',
+  },
+  image: { 
+    width: 300, 
+    height: 300, 
+    borderRadius: theme.borderRadius.medium, 
+    marginBottom: theme.spacing.m,
+  },
   modal: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.large,
     alignItems: 'center',
     minWidth: 300,
-    elevation: 5, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    ...theme.shadows.large,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: theme.typography.fontSizes.xlarge,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
   },
   modalText: {
-    fontSize: 16,
-    marginBottom: 20,
+    fontSize: theme.typography.fontSizes.medium,
+    marginBottom: theme.spacing.m,
+    color: theme.colors.textSecondary,
   },
   modalButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
     width: '100%',
     alignItems: 'center',
   },
   modalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
   },
   invoiceBox: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.small,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   invoiceText: {
-    fontSize: 16,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
   modalButtonRow: {
     flexDirection: 'row',
@@ -141,9 +171,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   flatButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginHorizontal: theme.spacing.m,
   },
 });
 
