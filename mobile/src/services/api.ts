@@ -146,3 +146,11 @@ export const checkInvoiceStatus = async (payment_request: string, mint?: string)
   const response = await api.get('/lightning/invoice_state', { params });
   return response.data;
 };
+
+export const redeemCashuToken = async (token: string, mint?: string) => {
+  let url = '/receive?token=' + encodeURIComponent(token);
+  // If you want to support multiple mints, add mint param if needed
+  if (mint) url += '&mint=' + encodeURIComponent(mint);
+  const response = await api.post(url);
+  return response.data;
+};

@@ -25,11 +25,10 @@ const InvoiceScreen: React.FC = () => {
   const [mintLoading, setMintLoading] = useState(true);
 
   // Receive state
-  const [lightningInvoice, setLightningInvoice] = useState('');
+  const [receiveToken, setReceiveToken] = useState('');
   const [receiveResult, setReceiveResult] = useState<string | null>(null);
   const [receiveLoading, setReceiveLoading] = useState(false);
   const [receiveError, setReceiveError] = useState<string | null>(null);
-  const [receiveAmount, setReceiveAmount] = useState('');
 
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('send');
@@ -86,25 +85,11 @@ const InvoiceScreen: React.FC = () => {
     setReceiveError(null);
     setReceiveResult(null);
     try {
-      const data = await payLightningInvoice(lightningInvoice);
-      setReceiveResult(JSON.stringify(data));
-      setLightningInvoice('');
+      const data = await sendCashu(0, receiveToken, selectedMint || undefined);
+      setReceiveResult('Token redeemed successfully!');
+      setReceiveToken('');
     } catch (err: any) {
-      setReceiveError(err.message || 'Failed to process invoice');
-    } finally {
-      setReceiveLoading(false);
-    }
-  };
-
-  const handleGenerateInvoice = async () => {
-    setReceiveLoading(true);
-    setReceiveError(null);
-    setReceiveResult(null);
-    try {
-      const data = await createLightningInvoice(Number(receiveAmount), selectedMint || undefined);
-      setReceiveResult(data.invoice || JSON.stringify(data));
-    } catch (err: any) {
-      setReceiveError(err.message || 'Failed to generate invoice');
+      setReceiveError(err.message || 'Failed to redeem token');
     } finally {
       setReceiveLoading(false);
     }
@@ -172,11 +157,11 @@ const InvoiceScreen: React.FC = () => {
   const renderReceive = () => (
     <View style={styles.tabContent}>
       <TextInput
-        style={styles.input}
-        placeholder="Amount (sats)"
-        keyboardType="numeric"
-        value={receiveAmount}
-        onChangeText={setReceiveAmount}
+        style={[styles.input, styles.invoiceInput]}
+        placeholder="Paste Cashu token here"
+        multiline
+        value={receiveToken}
+        onChangeText={setReceiveToken}
       />
       {mints.length > 1 && (
         <Picker
@@ -191,12 +176,14 @@ const InvoiceScreen: React.FC = () => {
       )}
       <TouchableOpacity
         style={styles.button}
-        onPress={handleGenerateInvoice}
-        disabled={receiveLoading || !receiveAmount}
+        onPress={handleReceive}
+        disabled={receiveLoading || !receiveToken}
       >
-        <Text style={styles.buttonText}>Generate Invoice</Text>
+        <Text style={styles.buttonText}>Redeem Token</Text>
       </TouchableOpacity>
-      {/* ...rest of your code */}
+      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
+      {receiveResult && <Text style={styles.invoice}>{receiveResult}</Text>}
     </View>
   );
 
