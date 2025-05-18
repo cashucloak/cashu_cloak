@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Icon } from 'react-native-elements';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { theme } from '../theme';
 
 // Import screens
@@ -11,6 +11,7 @@ import GenerateInvoiceScreen from '../screens/GenerateInvoiceScreen';
 import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import SendCashuScreen from '../screens/SendCashuScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
 
 // Custom theme that extends the navigation dark theme with our colors
 const CashuTheme = {
@@ -26,6 +27,7 @@ const CashuTheme = {
   },
 };
 
+const MainStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -53,7 +55,7 @@ const TabNavigator = () => (
         if (route.name === 'HomeTab') iconName = 'home';
         else if (route.name === 'Wallet') iconName = 'account-balance-wallet';
         else if (route.name === 'Invoices') iconName = 'receipt';
-        return <Icon name={iconName} type="material" size={size} color={color} />;
+        return <MaterialIcons name={iconName} size={size} color={color} />;
       },
       tabBarActiveTintColor: theme.colors.primary,
       tabBarInactiveTintColor: theme.colors.textSecondary,
@@ -83,7 +85,16 @@ const TabNavigator = () => (
 const AppNavigator = () => {
   return (
     <NavigationContainer theme={CashuTheme}>
-      <TabNavigator />
+      <MainStack.Navigator
+        initialRouteName="Welcome"
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
+        <MainStack.Screen name="Welcome" component={WelcomeScreen} />
+        <MainStack.Screen name="MainApp" component={TabNavigator} />
+      </MainStack.Navigator>
     </NavigationContainer>
   );
 };
