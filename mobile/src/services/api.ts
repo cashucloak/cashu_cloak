@@ -154,3 +154,8 @@ export const redeemCashuToken = async (token: string, mint?: string) => {
   const response = await api.post(url);
   return response.data;
 };
+
+export const receiveCashuToken = async (token: string) => {
+  const response = await api.post(`/receive?token=${encodeURIComponent(token)}`);
+  return response.data;
+};

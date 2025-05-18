@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice } from '../services/api';
+import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice, receiveCashuToken } from '../services/api';
 
 type Tab = 'send' | 'receive';
 
@@ -85,7 +85,7 @@ const InvoiceScreen: React.FC = () => {
     setReceiveError(null);
     setReceiveResult(null);
     try {
-      const data = await sendCashu(0, receiveToken, selectedMint || undefined);
+      const data = await receiveCashuToken(receiveToken);
       setReceiveResult('Token redeemed successfully!');
       setReceiveToken('');
     } catch (err: any) {
