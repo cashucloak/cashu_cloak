@@ -1,8 +1,7 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
-
-const API_URL = 'http://10.0.2.2:4448'; // Android emulator localhost address for wallet API
+import { API_URL } from '@env';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -30,7 +29,7 @@ export const steganographyService = {
       });
 
       // Use fetch for binary response
-      const response = await fetch('http://10.0.2.2:4448/steganography/hide', {
+      const response = await fetch(`${API_URL}/steganography/hide`, {
         method: 'POST',
         body: formData,
         headers: {
