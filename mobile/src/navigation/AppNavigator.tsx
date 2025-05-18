@@ -9,7 +9,6 @@ import HomeScreen from '../screens/HomeScreen';
 import GenerateInvoiceScreen from '../screens/GenerateInvoiceScreen';
 import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
-import InvoiceScreen from '../screens/InvoiceScreen';
 import SendCashuScreen from '../screens/SendCashuScreen';
 
 const HomeStack = createNativeStackNavigator();
@@ -47,11 +46,6 @@ const TabNavigator = () => (
       name="Wallet" 
       component={WalletScreen} 
       options={{ tabBarLabel: 'Wallet', headerShown: false }}
-    />
-    <Tab.Screen 
-      name="Invoices" 
-      component={InvoiceScreen} 
-      options={{ tabBarLabel: 'Invoices', headerShown: false }}
     />
   </Tab.Navigator>
 );

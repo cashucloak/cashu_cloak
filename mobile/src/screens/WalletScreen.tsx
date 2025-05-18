@@ -9,12 +9,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu } from '../services/api';
+import { getBalance, sendCashu, receiveCashuToken } from '../services/api';
 import { useIsFocused } from '@react-navigation/native';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
-type Tab = 'balance' | 'send' | 'invoice';
+type Tab = 'balance' | 'send' | 'invoice' | 'receive';
 
 type MintData = {
   available: number;
@@ -44,6 +44,12 @@ const WalletScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('balance');
 
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
+
+  // Receive state
+  const [receiveToken, setReceiveToken] = useState('');
+  const [receiveResult, setReceiveResult] = useState<string | null>(null);
+  const [receiveLoading, setReceiveLoading] = useState(false);
+  const [receiveError, setReceiveError] = useState<string | null>(null);
 
   const isFocused = useIsFocused();
 
@@ -116,6 +122,24 @@ const WalletScreen: React.FC = () => {
     }
   };
 
+  const handleReceive = async () => {
+    setReceiveLoading(true);
+    setReceiveError(null);
+    setReceiveResult(null);
+    try {
+      const data = await receiveCashuToken(receiveToken);
+      // Get new balance after receiving token
+      const balanceData = await getBalance();
+      const newBalance = balanceData.mints ? (Object.values(balanceData.mints)[0] as { available: number }).available : 0;
+      setReceiveResult(`Token redeemed successfully!\nNew Balance: ${newBalance} sat`);
+      setReceiveToken('');
+    } catch (err: any) {
+      setReceiveError(err.message || 'Failed to redeem token');
+    } finally {
+      setReceiveLoading(false);
+    }
+  };
+
   const renderBalance = () => (
     <View style={styles.tabContent}>
       {balanceLoading ? (
@@ -161,6 +185,29 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
+  const renderReceive = () => (
+    <View style={styles.tabContent}>      
+      <Text style={styles.titleWithMargin}>Redeem Cashu Token</Text>
+      <TextInput
+        style={[styles.input, styles.invoiceInput]}
+        placeholder="Paste Cashu token here"
+        multiline
+        value={receiveToken}
+        onChangeText={setReceiveToken}
+      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleReceive}
+        disabled={receiveLoading || !receiveToken}
+      >
+        <Text style={styles.buttonText}>Redeem Token</Text>
+      </TouchableOpacity>
+      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
+      {receiveResult && <Text style={styles.invoice}>{receiveResult}</Text>}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       
@@ -181,11 +228,20 @@ const WalletScreen: React.FC = () => {
             Send
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'receive' && styles.activeTab]}
+          onPress={() => setActiveTab('receive')}
+        >
+          <Text style={[styles.tabText, activeTab === 'receive' && styles.activeTabText]}>
+            Receive
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {activeTab === 'balance' && renderBalance()}
         {activeTab === 'send' && renderSend()}
+        {activeTab === 'receive' && renderReceive()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -293,6 +349,22 @@ const styles = StyleSheet.create({
   token: {
     fontSize: 16,
     color: '#666',
+  },
+  invoiceInput: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  invoice: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  titleWithMargin: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });
 
