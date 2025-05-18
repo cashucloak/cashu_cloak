@@ -116,7 +116,4 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-    
-    // Add react-native-vector-icons dependency
-    implementation project(':react-native-vector-icons')
 }

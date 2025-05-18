@@ -48,6 +48,11 @@ const HomeStackScreen = () => (
   </HomeStack.Navigator>
 );
 
+// Ensure MaterialIcons is properly loaded
+MaterialIcons.loadFont().catch(error => {
+  console.warn('Failed to load MaterialIcons font', error);
+});
+
 const TabNavigator = () => (
   <Tab.Navigator
     initialRouteName="Wallet"
