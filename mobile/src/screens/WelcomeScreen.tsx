@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.medium,
   },
   buttonText: {
-    color: theme.colors.text,
+    color: theme.colors.buttonText,
     fontSize: theme.typography.fontSizes.medium * 1.2,
     fontWeight: 'bold',
   },

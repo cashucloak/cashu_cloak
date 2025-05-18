@@ -19,6 +19,7 @@ export const theme = {
     textSecondary: '#B3B3B3',
     textTertiary: '#9E9E9E',
     placeholder: '#BDBDBD',
+    buttonText: '#000000', // Black text for buttons
     
     // UI colors
     border: '#2A2A2A',
