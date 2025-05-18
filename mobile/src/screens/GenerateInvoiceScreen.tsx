@@ -108,7 +108,7 @@ const GenerateInvoiceScreen = () => {
       )}
       <TextInput
         style={styles.input}
-        placeholder="Input amount (sats) to Receive"
+        placeholder="Amount (sats) to Receive"
         keyboardType="numeric"
         value={amount}
         onChangeText={setAmount}

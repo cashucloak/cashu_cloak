@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityInd
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { sendCashu, steganographyService } from '../services/api';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 type SendCashuParams = {
   imageUri?: string;
@@ -43,15 +44,28 @@ const SendCashuScreen = () => {
     }
   };
 
+  const pickImage = async () => {
+    const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
+    if (result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      // You can use navigation.setParams or a state update if you want to update the image in place:
+      navigation.setParams({
+        imageUri: asset.uri,
+        imageType: asset.type,
+        imageName: asset.fileName,
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Send Cashu</Text>
+      <Text style={styles.title}>Cloak Invoice to Send</Text>
       {imageUri && (
         <Image source={{ uri: imageUri }} style={styles.image} />
       )}
       <TextInput
         style={styles.input}
-        placeholder="Amount (sats)"
+        placeholder="Amount (sats) to Receive"
         keyboardType="numeric"
         value={sendAmount}
         onChangeText={setSendAmount}
@@ -61,7 +75,10 @@ const SendCashuScreen = () => {
         onPress={handleSend}
         disabled={sendLoading || !sendAmount}
       >
-        <Text style={styles.buttonText}>Send</Text>
+        <Text style={styles.buttonText}>Generate & Cloak Invoice</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={pickImage}>
+        <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
       {sendLoading && <ActivityIndicator size="large" color="#007AFF" />}
       {sendError && <Text style={styles.error}>{sendError}</Text>}
@@ -111,12 +128,13 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    marginBottom: 10,
     padding: 10,
-    marginBottom: 20,
-    fontSize: 18,
+    borderRadius: 8,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#007AFF',
