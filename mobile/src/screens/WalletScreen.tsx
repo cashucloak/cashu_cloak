@@ -9,9 +9,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice, checkInvoiceStatus } from '../services/api';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker';
+import { getBalance, sendCashu } from '../services/api';
+import { useIsFocused } from '@react-navigation/native';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
@@ -41,28 +40,11 @@ const WalletScreen: React.FC = () => {
   const [sendLoading, setSendLoading] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
-  // Receive state (was Pay)
-  const [invoice, setInvoice] = useState('');
-  const [invoiceResult, setInvoiceResult] = useState<string | null>(null);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
-  const [invoiceError, setInvoiceError] = useState<string | null>(null);
-
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('balance');
 
-  // New receive state
-  const [receiveAmount, setReceiveAmount] = useState('');
-  const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
-  const [invoiceId, setInvoiceId] = useState<string | null>(null);
-
-  const [availableMints, setAvailableMints] = useState<Mint[]>([]);
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
 
-  // Add state
-  const [checkingInvoice, setCheckingInvoice] = useState(false);
-  const [invoicePaid, setInvoicePaid] = useState(false);
-
-  const navigation = useNavigation();
   const isFocused = useIsFocused();
 
   // Fetch balance on mount and when returning to balance tab
@@ -111,7 +93,6 @@ const WalletScreen: React.FC = () => {
         available: data.available,
         balance: data.balance
       }));
-      setAvailableMints(mintList);
       if (mintList.length > 0) {
         setSelectedMint(mintList[0].url);
       }
@@ -132,65 +113,6 @@ const WalletScreen: React.FC = () => {
       setSendError(err.message || 'Failed to send sats');
     } finally {
       setSendLoading(false);
-    }
-  };
-
-  const handleInvoice = async () => {
-    setInvoiceLoading(true);
-    setInvoiceError(null);
-    setInvoiceResult(null);
-    try {
-      const data = await payLightningInvoice(invoice);
-      setInvoiceResult(JSON.stringify(data));
-      setInvoice('');
-      await fetchBalance();
-    } catch (err: any) {
-      setInvoiceError(err.message || 'Failed to process invoice');
-    } finally {
-      setInvoiceLoading(false);
-    }
-  };
-
-  const handleGenerateInvoice = async () => {
-    setInvoiceLoading(true);
-    setInvoiceError(null);
-    setGeneratedInvoice(null);
-    setInvoiceId(null);
-    setCheckingInvoice(false);
-    setInvoicePaid(false);
-    try {
-      const data = await createLightningInvoice(Number(receiveAmount), selectedMint);
-      setGeneratedInvoice(data.payment_request || data.invoice || JSON.stringify(data));
-      if (data.quote) setInvoiceId(data.quote);
-      setCheckingInvoice(true);
-      let pollCount = 0;
-      const maxPolls = 60; // 5 minutes if polling every 5 seconds
-
-      const pollInterval = setInterval(async () => {
-        pollCount++;
-        try {
-          // Call your backend to check invoice status
-          const status = await checkInvoiceStatus(data.payment_request, selectedMint);
-          if (status && status.result === 'SETTLED') {
-            clearInterval(pollInterval);
-            setCheckingInvoice(false);
-            setInvoicePaid(true);
-            fetchBalance();
-            setInvoiceResult('Payment received and tokens claimed successfully!');
-          }
-        } catch (error) {
-          // handle error if needed
-        }
-        if (pollCount >= maxPolls) {
-          clearInterval(pollInterval);
-          setCheckingInvoice(false);
-        }
-      }, 5000);
-
-    } catch (err: any) {
-      setInvoiceError(err.message || 'Failed to generate invoice');
-    } finally {
-      setInvoiceLoading(false);
     }
   };
 
@@ -239,43 +161,6 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
-  const renderInvoice = () => {
-    // Find the selected mint object
-    const selectedMintObj = availableMints.find(m => m.url === selectedMint);
-    return (
-      <View style={styles.tabContent}>
-        <TextInput
-          style={styles.input}
-          placeholder="Amount (sats)"
-          keyboardType="numeric"
-          value={receiveAmount}
-          onChangeText={setReceiveAmount}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleGenerateInvoice}
-          disabled={invoiceLoading || !receiveAmount}
-        >
-          <Text style={styles.buttonText}>Generate Invoice</Text>
-        </TouchableOpacity>
-
-        {invoiceLoading && <ActivityIndicator size="large" color="#007AFF" />}
-        {invoiceError && <Text style={styles.error}>{invoiceError}</Text>}
-        {generatedInvoice && selectedMintObj && (
-          <View style={styles.tokenBox}>
-            <Text style={styles.tokenLabel}>Invoice</Text>
-            <Text selectable style={styles.token}>{generatedInvoice}</Text>
-          </View>
-        )}
-
-        {invoicePaid && (
-          <Text style={styles.invoicePaid}>Invoice paid!</Text>
-        )}
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       
@@ -296,20 +181,11 @@ const WalletScreen: React.FC = () => {
             Send
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'invoice' && styles.activeTab]}
-          onPress={() => setActiveTab('invoice')}
-        >
-          <Text style={[styles.tabText, activeTab === 'invoice' && styles.activeTabText]}>
-            Invoice
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {activeTab === 'balance' && renderBalance()}
         {activeTab === 'send' && renderSend()}
-        {activeTab === 'invoice' && renderInvoice()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -357,12 +233,6 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     padding: 20,
-  },
-  mint: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   balance: {
     fontSize: 32,
@@ -423,90 +293,6 @@ const styles = StyleSheet.create({
   token: {
     fontSize: 16,
     color: '#666',
-  },
-  mintSelector: {
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-  },
-  mintLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  selectedMintBox: {
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  selectedMintLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  selectedMintUrl: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 5,
-  },
-  selectedMintBalance: {
-    fontSize: 14,
-    color: '#333',
-  },
-  picker: {
-    width: '100%',
-  },
-  mintBalances: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-  },
-  mintBalancesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  mintBalanceItem: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  mintBalanceText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 5,
-  },
-  mintUrl: {
-    fontSize: 12,
-    color: '#666',
-  },
-  invoiceCmd: {
-    marginTop: 10,
-    fontSize: 13,
-    color: '#555',
-    fontStyle: 'italic',
-  },
-  checkingInvoice: {
-    marginTop: 20,
-    fontSize: 16,
-    color: '#007AFF',
-    textAlign: 'center',
-  },
-  invoicePaid: {
-    marginTop: 20,
-    fontSize: 16,
-    color: 'green',
-    textAlign: 'center',
   },
 });
 
