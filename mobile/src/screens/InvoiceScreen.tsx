@@ -159,6 +159,7 @@ const InvoiceScreen: React.FC = () => {
 
   const renderReceive = () => (
     <View style={styles.tabContent}>
+      <Text style={styles.title}>Redeem Cashu Token</Text>
       <TextInput
         style={[styles.input, styles.invoiceInput]}
         placeholder="Paste Cashu token here"

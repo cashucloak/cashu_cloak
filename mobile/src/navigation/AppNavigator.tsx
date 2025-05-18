@@ -10,6 +10,7 @@ import GenerateInvoiceScreen from '../screens/GenerateInvoiceScreen';
 import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import InvoiceScreen from '../screens/InvoiceScreen';
+import SendCashuScreen from '../screens/SendCashuScreen';
 
 const HomeStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -19,6 +20,7 @@ const HomeStackScreen = () => (
     <HomeStack.Screen name="Home" component={HomeScreen} />
     <HomeStack.Screen name="GenerateInvoice" component={GenerateInvoiceScreen} />
     <HomeStack.Screen name="RevealInvoice" component={RevealInvoiceScreen} />
+    <HomeStack.Screen name="SendCashu" component={SendCashuScreen} />
   </HomeStack.Navigator>
 );
 
