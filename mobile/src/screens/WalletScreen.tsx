@@ -266,17 +266,9 @@ const WalletScreen: React.FC = () => {
           <View style={styles.tokenBox}>
             <Text style={styles.tokenLabel}>Invoice</Text>
             <Text selectable style={styles.token}>{generatedInvoice}</Text>
-            {/* {invoiceId && (
-              <Text style={styles.invoiceCmd}>
-                Command to check invoice: cashu invoice {receiveAmount} --id {invoiceId}
-              </Text>
-            )} */}
           </View>
         )}
 
-        {/* {checkingInvoice && (
-          <Text style={styles.checkingInvoice}>Checking invoice...</Text>
-        )} */}
         {invoicePaid && (
           <Text style={styles.invoicePaid}>Invoice paid!</Text>
         )}

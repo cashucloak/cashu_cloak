@@ -10,7 +10,6 @@ import GenerateInvoiceScreen from '../screens/GenerateInvoiceScreen';
 import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import InvoiceScreen from '../screens/InvoiceScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 
 const HomeStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -31,8 +30,6 @@ const TabNavigator = () => (
         if (route.name === 'HomeTab') iconName = 'home';
         else if (route.name === 'Wallet') iconName = 'account-balance-wallet';
         else if (route.name === 'Invoices') iconName = 'receipt';
-        else if (route.name === 'Profile') iconName = 'person';
-        else if (route.name === 'Settings') iconName = 'settings';
         return <Icon name={iconName} type="material" size={size} color={color} />;
       },
       tabBarActiveTintColor: '#2089dc',
@@ -44,9 +41,16 @@ const TabNavigator = () => (
       component={HomeStackScreen}
       options={{ tabBarLabel: 'Home', headerShown: false }}
     />
-    <Tab.Screen name="Wallet" component={WalletScreen} />
-    <Tab.Screen name="Invoices" component={InvoiceScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Screen 
+      name="Wallet" 
+      component={WalletScreen} 
+      options={{ tabBarLabel: 'Wallet', headerShown: false }}
+    />
+    <Tab.Screen 
+      name="Invoices" 
+      component={InvoiceScreen} 
+      options={{ tabBarLabel: 'Invoices', headerShown: false }}
+    />
   </Tab.Navigator>
 );
 

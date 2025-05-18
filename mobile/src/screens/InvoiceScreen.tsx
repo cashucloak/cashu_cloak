@@ -86,7 +86,10 @@ const InvoiceScreen: React.FC = () => {
     setReceiveResult(null);
     try {
       const data = await receiveCashuToken(receiveToken);
-      setReceiveResult('Token redeemed successfully!');
+      // Get new balance after receiving token
+      const balanceData = await getBalance();
+      const newBalance = balanceData.mints ? (Object.values(balanceData.mints)[0] as { available: number }).available : 0;
+      setReceiveResult(`Token redeemed successfully!\nNew Balance: ${newBalance} sat`);
       setReceiveToken('');
     } catch (err: any) {
       setReceiveError(err.message || 'Failed to redeem token');
@@ -131,7 +134,7 @@ const InvoiceScreen: React.FC = () => {
           )}
           {mints.length === 1 && (
             <Text style={styles.pickerLabel}>
-              Mint: {mints[0].url} (Balance: {mints[0].available} sat)
+              Balance: {mints[0].available} sat
             </Text>
           )}
           <TouchableOpacity
@@ -299,6 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     padding: 10,
     borderRadius: 8,
+    textAlign: 'center',
   },
   error: {
     color: 'red',
@@ -314,6 +318,8 @@ const styles = StyleSheet.create({
   pickerLabel: {
     fontSize: 16,
     marginRight: 10,
+    textAlign: 'center',
+    width: '100%',
   },
   picker: {
     flex: 1,
