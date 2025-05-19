@@ -84,13 +84,15 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.card,
-    borderTopColor: theme.colors.border,
     borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
   tabBar: {
     flexDirection: 'row',
-    height: 60,
     alignItems: 'center',
+    justifyContent: 'space-around',
   },
   tab: {
     flex: 1,

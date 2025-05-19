@@ -16,7 +16,7 @@ import { theme } from '../theme';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
-type Tab = 'balance' | 'send' | 'receive';
+type Tab = 'send' | 'receive';
 
 type MintData = {
   available: number;
@@ -32,13 +32,8 @@ type Mint = {
 const WalletScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
-  // Balance state
-  const [balance, setBalance] = useState<number | null>(null);
-  const [balanceLoading, setBalanceLoading] = useState(true);
-  const [balanceError, setBalanceError] = useState<string | null>(null);
-
   // Active tab
-  const [activeTab, setActiveTab] = useState<Tab>('balance');
+  const [activeTab, setActiveTab] = useState<Tab>('receive');
 
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
 
@@ -51,49 +46,17 @@ const WalletScreen: React.FC = () => {
   // Pay state
   const [payInvoice, setPayInvoice] = useState('');
   const [payLoading, setPayLoading] = useState(false);
-  const [payError, setPayError] = useState<string | null>(null);
   const [payResult, setPayResult] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   const isFocused = useIsFocused();
-
-  // Fetch balance on mount and when returning to balance tab
-  useEffect(() => {
-    if (activeTab === 'balance') {
-      fetchBalance();
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'send') {
       fetchMints();
     }
   }, [activeTab]);
-
-  useEffect(() => {
-    if (isFocused) {
-      fetchBalance();
-    }
-  }, [isFocused]);
-
-  const fetchBalance = async () => {
-    try {
-      setBalanceLoading(true);
-      setBalanceError(null);
-      const data = await getBalance();
-      console.log('Balance response:', data);
-      // Only show the balance for the target mint
-      if (data.mints && data.mints[TARGET_MINT]) {
-        setBalance(data.mints[TARGET_MINT].available);
-      } else {
-        setBalance(0);
-      }
-    } catch (err: any) {
-      setBalanceError(err.message || 'Failed to fetch balance');
-    } finally {
-      setBalanceLoading(false);
-    }
-  };
 
   const fetchMints = async () => {
     const data = await getBalance();
@@ -135,7 +98,6 @@ const WalletScreen: React.FC = () => {
       const data = await payLightningInvoice(payInvoice);
       if (data.state === 'paid') {
         setPayResult('Invoice paid successfully!');
-        await fetchBalance();
       } else if (data.state === 'pending') {
         setPayResult('Invoice is pending.');
       } else if (data.state === 'unpaid') {
@@ -196,23 +158,6 @@ const WalletScreen: React.FC = () => {
     }
   };
 
-  const renderBalance = () => (
-    <View style={styles.tabContent}>
-      {balanceLoading ? (
-        <ActivityIndicator size="large" color="#007AFF" />
-      ) : balanceError ? (
-        <Text style={styles.error}>{balanceError}</Text>
-      ) : (
-        <>
-          <Text style={styles.balance}>{balance} sat</Text>
-        </>
-      )}
-      <TouchableOpacity style={styles.button} onPress={fetchBalance}>
-        <Text style={styles.buttonText}>Refresh BTC Balance</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   const renderReceive = () => (
     <View style={styles.tabContent}>      
       <TextInput
@@ -261,14 +206,13 @@ const WalletScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      
       <View style={styles.tabBar}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'balance' && styles.activeTab]}
-          onPress={() => setActiveTab('balance')}
+          style={[styles.tab, activeTab === 'send' && styles.activeTab]}
+          onPress={() => setActiveTab('send')}
         >
-          <Text style={[styles.tabText, activeTab === 'balance' && styles.activeTabText]}>
-            Balance
+          <Text style={[styles.tabText, activeTab === 'send' && styles.activeTabText]}>
+            Send
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -279,18 +223,9 @@ const WalletScreen: React.FC = () => {
             Receive
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'send' && styles.activeTab]}
-          onPress={() => setActiveTab('send')}
-        >
-          <Text style={[styles.tabText, activeTab === 'send' && styles.activeTabText]}>
-            Send
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
-        {activeTab === 'balance' && renderBalance()}
         {activeTab === 'receive' && renderReceive()}
         {activeTab === 'send' && renderPayInvoice()}
       </ScrollView>
