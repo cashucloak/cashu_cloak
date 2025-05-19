@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { sendCashu, steganographyService } from '../services/api';
+import { sendCashu, steganographyService, getBalance } from '../services/api';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { theme } from '../theme';
 
@@ -61,25 +61,26 @@ const SendCashuScreen = () => {
   return (
     <View style={styles.container}>
       {imageUri && (
-        <Image source={{ uri: imageUri }} style={styles.image} />
+        <TouchableOpacity onPress={pickImage}>
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        </TouchableOpacity>
       )}
-      <TextInput
-        style={styles.input}
-        placeholder="Bitcoin (sats) to Receive"
-        placeholderTextColor={theme.colors.placeholder}
-        keyboardType="numeric"
-        value={sendAmount}
-        onChangeText={setSendAmount}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Bitcoin (sats) to Receive"
+          placeholderTextColor={theme.colors.placeholder}
+          keyboardType="numeric"
+          value={sendAmount}
+          onChangeText={setSendAmount}
+        />
+      </View>
       <TouchableOpacity
         style={styles.button}
         onPress={handleSend}
         disabled={sendLoading || !sendAmount}
       >
         <Text style={styles.buttonText}>Generate & Cloak</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
       {sendLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {sendError && <Text style={styles.error}>{sendError}</Text>}
@@ -128,24 +129,29 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.medium,
     marginBottom: theme.spacing.m,
   },
-  input: {
+  inputContainer: {
     width: '100%',
+    marginBottom: theme.spacing.s,
+    alignItems: 'center',
+  },
+  input: {
+    width: 300,
     height: 40,
     borderColor: theme.colors.border,
     borderWidth: 1,
-    marginBottom: theme.spacing.s,
     padding: theme.spacing.s,
     borderRadius: theme.borderRadius.small,
     textAlign: 'center',
     backgroundColor: theme.colors.card,
     color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
   },
   button: {
     backgroundColor: theme.colors.primary,
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     marginVertical: theme.spacing.s,
-    width: '100%',
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },

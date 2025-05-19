@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { theme } from '../theme';
+import CustomTabBar from '../components/CustomTabBar';
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -56,6 +57,7 @@ MaterialIcons.loadFont().catch(error => {
 const TabNavigator = () => (
   <Tab.Navigator
     initialRouteName="Wallet"
+    tabBar={props => <CustomTabBar {...props} />}
     screenOptions={({ route }) => ({
       tabBarIcon: ({ color, size }) => {
         let iconName = 'home';
@@ -66,10 +68,6 @@ const TabNavigator = () => (
       },
       tabBarActiveTintColor: theme.colors.primary,
       tabBarInactiveTintColor: theme.colors.textSecondary,
-      tabBarStyle: {
-        backgroundColor: theme.colors.card,
-        borderTopColor: theme.colors.border,
-      },
       headerStyle: {
         backgroundColor: theme.colors.card,
       },

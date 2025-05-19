@@ -28,6 +28,7 @@ const GenerateInvoiceScreen = () => {
   const [mintLoading, setMintLoading] = useState(true);
   const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -63,6 +64,10 @@ const GenerateInvoiceScreen = () => {
     } finally {
       setMintLoading(false);
     }
+  };
+
+  const handleMintChange = (mintUrl: string) => {
+    setSelectedMint(mintUrl);
   };
 
   const handleGenerateInvoice = async () => {
@@ -130,22 +135,26 @@ const GenerateInvoiceScreen = () => {
   return (
     <View style={styles.container}>
       {selectedImage && (
-        <Image source={{ uri: selectedImage }} style={styles.image} />
+        <TouchableOpacity onPress={pickImage}>
+          <Image source={{ uri: selectedImage }} style={styles.image} />
+        </TouchableOpacity>
       )}
-      <TextInput
-        style={styles.input}
-        placeholder="Bitcoin (sats) to Receive"
-        placeholderTextColor={theme.colors.placeholder}
-        keyboardType="numeric"
-        value={amount}
-        onChangeText={setAmount}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Bitcoin (sats) to Receive"
+          placeholderTextColor={theme.colors.placeholder}
+          keyboardType="numeric"
+          value={amount}
+          onChangeText={setAmount}
+        />
+      </View>
       {mintLoading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : availableMints.length > 1 ? (
         <Picker
           selectedValue={selectedMint}
-          onValueChange={setSelectedMint}
+          onValueChange={handleMintChange}
           style={styles.input}
           dropdownIconColor={theme.colors.text}
         >
@@ -160,9 +169,6 @@ const GenerateInvoiceScreen = () => {
         disabled={loading || !amount || !selectedImage}
       >
         <Text style={styles.buttonText}>Generate & Cloak</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
 
@@ -203,8 +209,13 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.medium,
     marginBottom: theme.spacing.m,
   },
-  input: {
+  inputContainer: {
     width: '100%',
+    marginBottom: theme.spacing.s,
+    alignItems: 'center',
+  },
+  input: {
+    width: 300,
     height: 40,
     borderColor: theme.colors.border,
     borderWidth: 1,
@@ -214,13 +225,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     backgroundColor: theme.colors.card,
     color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
   },
   button: {
     backgroundColor: theme.colors.primary,
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     marginVertical: theme.spacing.s,
-    width: '100%',
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },

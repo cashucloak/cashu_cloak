@@ -13,11 +13,10 @@ const HomeScreen = () => {
   const handleSendCashu = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
     if (result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
       navigation.navigate('SendCashu', {
-        imageUri: asset.uri,
-        imageType: asset.type,
-        imageName: asset.fileName,
+        imageUri: result.assets[0].uri,
+        imageType: result.assets[0].type,
+        imageName: result.assets[0].fileName,
       });
     }
   };
@@ -27,6 +26,7 @@ const HomeScreen = () => {
       <Image source={welcomeImage} style={styles.welcomeImage} resizeMode="contain" />
       <Text style={styles.title}>Welcome to Cashu Cloak</Text>
       <Text style={styles.subtitle}>Your secure BTC mobile wallet</Text>
+
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('GenerateInvoice')}>
         <Text style={styles.buttonText}>Receive Bitcoin</Text>
       </TouchableOpacity>
@@ -45,21 +45,22 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.m,
   },
   welcomeImage: {
-    width: 250,
-    height: 150,
-    marginBottom: theme.spacing.m,
+    width: 200,
+    height: 200,
+    marginBottom: theme.spacing.l,
   },
   title: {
     fontSize: theme.typography.fontSizes.xxlarge,
     fontWeight: 'bold',
     marginBottom: theme.spacing.s,
-    textAlign: 'center',
     color: theme.colors.text,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: theme.typography.fontSizes.medium,
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     marginVertical: theme.spacing.s,
-    width: 300,
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },

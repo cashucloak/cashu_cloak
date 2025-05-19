@@ -14,6 +14,7 @@ const RevealInvoiceScreen = () => {
   const navigation = useNavigation<any>();
   const [modalVisible, setModalVisible] = useState(false);
   const [revealedInvoice, setRevealedInvoice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -36,14 +37,16 @@ const RevealInvoiceScreen = () => {
       setRevealedInvoice(revealed);
       setModalVisible(true);
     } catch (err) {
-      Alert.alert('Error', 'Failed to Uncloak Image');
+      setError('Failed to Uncloak Image');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {selectedImage && (
-        <Image source={{ uri: selectedImage }} style={styles.image} />
+        <TouchableOpacity onPress={pickImage}>
+          <Image source={{ uri: selectedImage }} style={styles.image} />
+        </TouchableOpacity>
       )}
       <TouchableOpacity
         style={styles.button}
@@ -52,10 +55,17 @@ const RevealInvoiceScreen = () => {
       >
         <Text style={styles.buttonText}>Uncloak Image</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Different Image</Text>
-      </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+      {error && <Text style={styles.error}>{error}</Text>}
+      {revealedInvoice && (
+        <View style={styles.invoiceContainer}>
+          <Text style={styles.invoiceLabel}>Revealed Invoice:</Text>
+          <Text selectable style={styles.invoiceText}>{revealedInvoice}</Text>
+          <TouchableOpacity onPress={() => Clipboard.setString(revealedInvoice)}>
+            <Text style={styles.copyButton}>Copy</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
@@ -93,12 +103,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.m,
     color: theme.colors.text,
   },
-  button: { 
-    backgroundColor: theme.colors.primary, 
-    padding: theme.spacing.m, 
-    borderRadius: theme.borderRadius.medium, 
-    marginVertical: theme.spacing.s, 
-    width: '100%', 
+  button: {
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },
@@ -173,6 +183,30 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.medium,
     fontWeight: 'bold',
     marginHorizontal: theme.spacing.m,
+  },
+  invoiceContainer: {
+    marginTop: theme.spacing.m,
+    padding: theme.spacing.m,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.small,
+    alignItems: 'center',
+  },
+  invoiceLabel: {
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.s,
+    color: theme.colors.textSecondary,
+  },
+  copyButton: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginTop: theme.spacing.s,
+  },
+  error: {
+    color: theme.colors.error,
+    fontSize: theme.typography.fontSizes.medium,
+    marginTop: theme.spacing.m,
   },
 });
 

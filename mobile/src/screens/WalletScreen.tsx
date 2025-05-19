@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, receiveCashuToken, payLightningInvoice } from '../services/api';
+import { getBalance, receiveCashuToken, payLightningInvoice, checkInvoiceStatus } from '../services/api';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
 
@@ -51,8 +51,9 @@ const WalletScreen: React.FC = () => {
   // Pay state
   const [payInvoice, setPayInvoice] = useState('');
   const [payLoading, setPayLoading] = useState(false);
-  const [payResult, setPayResult] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
+  const [payResult, setPayResult] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const isFocused = useIsFocused();
 
@@ -342,6 +343,7 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     padding: theme.spacing.m,
+    alignItems: 'center',
   },
   balance: {
     fontSize: theme.typography.fontSizes.xxlarge,
@@ -366,7 +368,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     marginVertical: theme.spacing.s,
-    width: '100%',
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },
