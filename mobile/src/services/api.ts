@@ -125,18 +125,9 @@ export const requestMintQuote = async (amount: number, unit: string = 'sat', des
 
 // Pay a Lightning invoice (melt)
 export const payLightningInvoice = async (invoice: string) => {
-  // First get a melt quote
-  const quoteRes = await api.post('/v1/melt/quote/bolt11', { request: invoice, unit: 'sat' });
-  const quote = quoteRes.data.quote;
-  
-  // Then actually pay
-  const response = await api.post('/v1/melt/bolt11', { 
-    quote: quote,
-    inputs: [], // The wallet will handle this
-    outputs: [] // The wallet will handle this
-  });
+  const response = await api.post('/melt/pay_invoice', { invoice });
   return response.data;
-}; 
+};
 
 // Check Lightning invoice status
 export const checkInvoiceStatus = async (payment_request: string, mint?: string) => {

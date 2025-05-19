@@ -9,13 +9,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu, receiveCashuToken } from '../services/api';
+import { getBalance, receiveCashuToken, payLightningInvoice } from '../services/api';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
-type Tab = 'balance' | 'send' | 'invoice' | 'receive';
+type Tab = 'balance' | 'send' | 'receive';
 
 type MintData = {
   available: number;
@@ -36,13 +36,6 @@ const WalletScreen: React.FC = () => {
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [balanceError, setBalanceError] = useState<string | null>(null);
 
-  // Send state
-  const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState('');
-  const [sendSuccess, setSendSuccess] = useState<string | null>(null);
-  const [sendLoading, setSendLoading] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('balance');
 
@@ -54,6 +47,12 @@ const WalletScreen: React.FC = () => {
   const [receiveLoading, setReceiveLoading] = useState(false);
   const [receiveError, setReceiveError] = useState<string | null>(null);
 
+  // Pay state
+  const [payInvoice, setPayInvoice] = useState('');
+  const [payLoading, setPayLoading] = useState(false);
+  const [payResult, setPayResult] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+
   const isFocused = useIsFocused();
 
   // Fetch balance on mount and when returning to balance tab
@@ -64,7 +63,7 @@ const WalletScreen: React.FC = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'invoice') {
+    if (activeTab === 'send') {
       fetchMints();
     }
   }, [activeTab]);
@@ -108,23 +107,6 @@ const WalletScreen: React.FC = () => {
     }
   };
 
-  const handleSend = async () => {
-    setSendLoading(true);
-    setSendError(null);
-    setSendSuccess(null);
-    try {
-      const data = await sendCashu(Number(amount), recipient, selectedMint || undefined);
-      setSendSuccess(`Sent ${amount} sats to ${recipient}. Token: ${data.token || JSON.stringify(data)}`);
-      setAmount('');
-      setRecipient('');
-      await fetchBalance();
-    } catch (err: any) {
-      setSendError(err.message || 'Failed to send sats');
-    } finally {
-      setSendLoading(false);
-    }
-  };
-
   const handleReceive = async () => {
     setReceiveLoading(true);
     setReceiveError(null);
@@ -140,6 +122,29 @@ const WalletScreen: React.FC = () => {
       setReceiveError(err.message || 'Failed to redeem token');
     } finally {
       setReceiveLoading(false);
+    }
+  };
+
+  const handlePayInvoice = async () => {
+    setPayLoading(true);
+    setPayError(null);
+    setPayResult(null);
+    try {
+      const data = await payLightningInvoice(payInvoice);
+      if (data.state === 'paid') {
+        setPayResult('Invoice paid successfully!');
+        await fetchBalance();
+      } else if (data.state === 'pending') {
+        setPayResult('Invoice is pending.');
+      } else if (data.state === 'unpaid') {
+        setPayResult('Invoice is unpaid.');
+      } else {
+        setPayResult(data.state);
+      }
+    } catch (err: any) {
+      setPayError(err.message || 'Failed to pay invoice');
+    } finally {
+      setPayLoading(false);
     }
   };
 
@@ -160,42 +165,11 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
-  const renderSend = () => (
-    <View style={styles.tabContent}>
-      <TextInput
-        style={styles.input}
-        placeholder="Amount (sats)"
-        placeholderTextColor={theme.colors.placeholder}
-        keyboardType="numeric"
-        value={amount}
-        onChangeText={setAmount}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Recipient (pubkey or address)"
-        placeholderTextColor={theme.colors.placeholder}
-        value={recipient}
-        onChangeText={setRecipient}
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleSend}
-        disabled={sendLoading || !amount || !recipient}
-      >
-        <Text style={styles.buttonText}>Send</Text>
-      </TouchableOpacity>
-      {sendLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {sendError && <Text style={styles.error}>{sendError}</Text>}
-      {sendSuccess && <Text style={styles.success}>{sendSuccess}</Text>}
-    </View>
-  );
-
   const renderReceive = () => (
     <View style={styles.tabContent}>      
-      <Text style={styles.titleWithMargin}>Redeem Cashu Token</Text>
       <TextInput
         style={[styles.input, styles.invoiceInput]}
-        placeholder="Paste Cashu token here"
+        placeholder="Paste Cashu Token"
         placeholderTextColor={theme.colors.placeholder}
         multiline
         value={receiveToken}
@@ -214,6 +188,29 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
+  const renderPayInvoice = () => (
+    <View style={styles.tabContent}>
+      <TextInput
+        style={[styles.input, styles.invoiceInput]}
+        placeholder="Paste Lightning Invoice"
+        placeholderTextColor={theme.colors.placeholder}
+        multiline
+        value={payInvoice}
+        onChangeText={setPayInvoice}
+      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handlePayInvoice}
+        disabled={payLoading || !payInvoice}
+      >
+        <Text style={styles.buttonText}>Pay Invoice</Text>
+      </TouchableOpacity>
+      {payLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {payError && <Text style={styles.error}>{payError}</Text>}
+      {payResult && <Text style={[styles.success, { textAlign: 'center' }]}>{payResult}</Text>}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       
@@ -227,14 +224,6 @@ const WalletScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'send' && styles.activeTab]}
-          onPress={() => setActiveTab('send')}
-        >
-          <Text style={[styles.tabText, activeTab === 'send' && styles.activeTabText]}>
-            Send
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           style={[styles.tab, activeTab === 'receive' && styles.activeTab]}
           onPress={() => setActiveTab('receive')}
         >
@@ -242,12 +231,20 @@ const WalletScreen: React.FC = () => {
             Receive
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'send' && styles.activeTab]}
+          onPress={() => setActiveTab('send')}
+        >
+          <Text style={[styles.tabText, activeTab === 'send' && styles.activeTabText]}>
+            Send
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {activeTab === 'balance' && renderBalance()}
-        {activeTab === 'send' && renderSend()}
         {activeTab === 'receive' && renderReceive()}
+        {activeTab === 'send' && renderPayInvoice()}
       </ScrollView>
     </SafeAreaView>
   );
