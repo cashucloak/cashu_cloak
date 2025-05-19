@@ -103,13 +103,12 @@ const GenerateInvoiceScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Cloak Invoice to Receive</Text>
       {selectedImage && (
         <Image source={{ uri: selectedImage }} style={styles.image} />
       )}
       <TextInput
         style={styles.input}
-        placeholder="Amount (sats) to Receive"
+        placeholder="Bitcoin (sats) to Receive"
         placeholderTextColor={theme.colors.placeholder}
         keyboardType="numeric"
         value={amount}
@@ -134,15 +133,14 @@ const GenerateInvoiceScreen = () => {
         onPress={handleGenerateInvoice}
         disabled={loading || !amount || !selectedImage}
       >
-        <Text style={styles.buttonText}>Generate & Cloak Invoice</Text>
+        <Text style={styles.buttonText}>Generate & Cloak</Text>
       </TouchableOpacity>
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Invoice Generated!</Text>
-            <Text style={styles.modalMessage}>Invoice hidden in image. Waiting for payment...</Text>
+            <Text style={styles.modalTitle}>Lightning Invoice Generated!</Text>
+            <Text style={styles.modalMessage}>Invoice hidden in image</Text>
             <View style={styles.invoiceBox}>
-              <Text style={styles.invoiceLabel}>Invoice:</Text>
               <Text selectable style={styles.invoiceText}>{generatedInvoice}</Text>
             </View>
             <View style={styles.modalButtonRow}>

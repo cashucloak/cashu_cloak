@@ -60,13 +60,12 @@ const SendCashuScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cloak Invoice to Send</Text>
       {imageUri && (
         <Image source={{ uri: imageUri }} style={styles.image} />
       )}
       <TextInput
         style={styles.input}
-        placeholder="Amount (sats) to Receive"
+        placeholder="Bitcoin (sats) to Receive"
         placeholderTextColor={theme.colors.placeholder}
         keyboardType="numeric"
         value={sendAmount}
@@ -77,7 +76,7 @@ const SendCashuScreen = () => {
         onPress={handleSend}
         disabled={sendLoading || !sendAmount}
       >
-        <Text style={styles.buttonText}>Generate & Cloak Invoice</Text>
+        <Text style={styles.buttonText}>Generate & Cloak</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={pickImage}>
         <Text style={styles.buttonText}>Select Different Image</Text>
@@ -89,8 +88,8 @@ const SendCashuScreen = () => {
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Token Generated!</Text>
-            <Text style={styles.modalMessage}>Token hidden in image. Ready to send!</Text>
+            <Text style={styles.modalTitle}>Cashu Token Generated!</Text>
+            <Text style={styles.modalMessage}>Token hidden in image</Text>
             <View style={styles.invoiceBox}>
               <Text selectable style={styles.invoiceText}>{sendToken}</Text>
             </View>

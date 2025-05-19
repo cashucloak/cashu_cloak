@@ -36,14 +36,12 @@ const RevealInvoiceScreen = () => {
       setRevealedInvoice(revealed);
       setModalVisible(true);
     } catch (err) {
-      Alert.alert('Error', 'Failed to reveal invoice from image');
+      Alert.alert('Error', 'Failed to Uncloak Image');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Reveal Invoice</Text>
-
       {selectedImage && (
         <Image source={{ uri: selectedImage }} style={styles.image} />
       )}
@@ -52,7 +50,7 @@ const RevealInvoiceScreen = () => {
         onPress={handleRevealToken}
         disabled={loading || !selectedImage}
       >
-        <Text style={styles.buttonText}>Reveal Invoice</Text>
+        <Text style={styles.buttonText}>Uncloak Image</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={pickImage}>
         <Text style={styles.buttonText}>Select Different Image</Text>
@@ -62,7 +60,7 @@ const RevealInvoiceScreen = () => {
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Invoice Revealed!</Text>
+            <Text style={styles.modalTitle}>Uncloaked Image!</Text>
             <View style={styles.invoiceBox}>
               <Text selectable style={styles.invoiceText}>{revealedInvoice}</Text>
             </View>

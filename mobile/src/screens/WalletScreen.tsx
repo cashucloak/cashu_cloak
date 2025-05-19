@@ -160,7 +160,7 @@ const WalletScreen: React.FC = () => {
         </>
       )}
       <TouchableOpacity style={styles.button} onPress={fetchBalance}>
-        <Text style={styles.buttonText}>Refresh Balance</Text>
+        <Text style={styles.buttonText}>Refresh BTC Balance</Text>
       </TouchableOpacity>
     </View>
   );
@@ -169,7 +169,7 @@ const WalletScreen: React.FC = () => {
     <View style={styles.tabContent}>      
       <TextInput
         style={[styles.input, styles.invoiceInput]}
-        placeholder="Paste Cashu Token"
+        placeholder="Paste BTC Cashu Token"
         placeholderTextColor={theme.colors.placeholder}
         multiline
         value={receiveToken}
@@ -192,7 +192,7 @@ const WalletScreen: React.FC = () => {
     <View style={styles.tabContent}>
       <TextInput
         style={[styles.input, styles.invoiceInput]}
-        placeholder="Paste Lightning Invoice"
+        placeholder="Paste BTC Lightning Invoice"
         placeholderTextColor={theme.colors.placeholder}
         multiline
         value={payInvoice}
