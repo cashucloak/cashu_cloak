@@ -16,23 +16,23 @@ const WelcomeScreen = () => {
       <Text style={styles.title}>CashuCloak</Text>
       
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Stealth Payments</Text>
+        <Text style={styles.sectionTitle}>Stealth Bitcoin Payments</Text>
         <Text style={styles.sectionText}>
-          While <Text style={styles.bold}>cryptography</Text> protects the message, <Text style={styles.bold}>steganography</Text> protects the parties communicating.
+          While <Text style={styles.bold}>cryptography</Text> protects the message, <Text style={styles.bold}>steganography</Text> protects the parties communicating
         </Text>
       </View>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>How It Works</Text>
         <Text style={styles.sectionText}>
-          Cashu Cloak allows you to pay or get paid <Text style={styles.bold}>stealthily</Text> by hiding Cashu tokens <Text style={styles.bold}>inside images</Text>.
+          Cashu Cloak allows you to send and receive Bitcoin <Text style={styles.bold}>stealthily</Text> by hiding them as Cashu tokens <Text style={styles.bold}>inside images</Text>
         </Text>
       </View>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Coming Soon</Text>
         <Text style={styles.sectionText}>
-          Soon you'll be able to hide payments in <Text style={styles.bold}>WhatsApp messages</Text> and other <Text style={styles.bold}>digital media</Text>.
+          Soon you'll be able to hide Bitcoin payments in <Text style={styles.bold}>WhatsApp messages</Text> and other <Text style={styles.bold}>digital media</Text>
         </Text>
       </View>
       
@@ -40,7 +40,7 @@ const WelcomeScreen = () => {
         style={styles.button} 
         onPress={() => navigation.navigate('Process')}
       >
-        <Text style={styles.buttonText}>Next: How It Works</Text>
+        <Text style={styles.buttonText}>How It Works</Text>
       </TouchableOpacity>
     </ScrollView>
   );
