@@ -168,7 +168,7 @@ const GenerateInvoiceScreen = () => {
         onPress={handleGenerateInvoice}
         disabled={loading || !amount || !selectedImage}
       >
-        <Text style={styles.buttonText}>Generate & Cloak</Text>
+        <Text style={styles.buttonText}>Cloak</Text>
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
 
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: theme.borderRadius.medium,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.xl,
   },
   inputContainer: {
     width: '100%',
@@ -215,17 +215,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   input: {
-    width: 300,
-    height: 40,
-    borderColor: theme.colors.border,
+    width: '57.5%',
     borderWidth: 1,
-    marginBottom: theme.spacing.s,
-    padding: theme.spacing.s,
-    borderRadius: theme.borderRadius.small,
-    textAlign: 'center',
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.xs,
+    fontSize: theme.typography.fontSizes.medium,
     backgroundColor: theme.colors.card,
     color: theme.colors.text,
-    fontSize: theme.typography.fontSizes.medium,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: theme.colors.primary,

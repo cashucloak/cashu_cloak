@@ -68,7 +68,7 @@ const SendCashuScreen = () => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Bitcoin (sats) to Receive"
+          placeholder="Bitcoin (sats) to Send"
           placeholderTextColor={theme.colors.placeholder}
           keyboardType="numeric"
           value={sendAmount}
@@ -80,7 +80,7 @@ const SendCashuScreen = () => {
         onPress={handleSend}
         disabled={sendLoading || !sendAmount}
       >
-        <Text style={styles.buttonText}>Generate & Cloak</Text>
+        <Text style={styles.buttonText}>Cloak</Text>
       </TouchableOpacity>
       {sendLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {sendError && <Text style={styles.error}>{sendError}</Text>}
@@ -98,7 +98,7 @@ const SendCashuScreen = () => {
               <TouchableOpacity onPress={() => Clipboard.setString(sendToken || '')}>
                 <Text style={styles.flatButtonText}>Copy</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.goBack(); }}>
+              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.navigate('Home'); }}>
                 <Text style={styles.flatButtonText}>OK</Text>
               </TouchableOpacity>
             </View>
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: theme.borderRadius.medium,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.xl,
   },
   inputContainer: {
     width: '100%',
@@ -140,10 +140,11 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.medium,
     padding: theme.spacing.m,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.xs,
     fontSize: theme.typography.fontSizes.medium,
     backgroundColor: theme.colors.card,
     color: theme.colors.text,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: theme.colors.primary,

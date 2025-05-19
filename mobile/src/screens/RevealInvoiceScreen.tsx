@@ -57,15 +57,6 @@ const RevealInvoiceScreen = () => {
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {error && <Text style={styles.error}>{error}</Text>}
-      {revealedInvoice && (
-        <View style={styles.invoiceContainer}>
-          <Text style={styles.invoiceLabel}>Revealed Invoice:</Text>
-          <Text selectable style={styles.invoiceText}>{revealedInvoice}</Text>
-          <TouchableOpacity onPress={() => Clipboard.setString(revealedInvoice)}>
-            <Text style={styles.copyButton}>Copy</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
@@ -183,25 +174,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.medium,
     fontWeight: 'bold',
     marginHorizontal: theme.spacing.m,
-  },
-  invoiceContainer: {
-    marginTop: theme.spacing.m,
-    padding: theme.spacing.m,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.small,
-    alignItems: 'center',
-  },
-  invoiceLabel: {
-    fontSize: theme.typography.fontSizes.medium,
-    fontWeight: 'bold',
-    marginBottom: theme.spacing.s,
-    color: theme.colors.textSecondary,
-  },
-  copyButton: {
-    color: theme.colors.primary,
-    fontSize: theme.typography.fontSizes.medium,
-    fontWeight: 'bold',
-    marginTop: theme.spacing.s,
   },
   error: {
     color: theme.colors.error,

@@ -48,7 +48,16 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
           return (
             <React.Fragment key={route.key}>
               <TouchableOpacity
-                onPress={() => navigation.navigate(route.name)}
+                onPress={() => {
+                  if (route.name === 'HomeTab') {
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ name: 'HomeTab' }],
+                    });
+                  } else {
+                    navigation.navigate(route.name);
+                  }
+                }}
                 style={styles.tab}
               >
                 {icon}

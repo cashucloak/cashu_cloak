@@ -7,7 +7,7 @@ import { theme } from '../theme';
 // Import the welcome image
 const welcomeImage = require('../assets/images/cashucloak2.png');
 
-const HomeScreen = () => {
+const CloakScreen = () => {
   const navigation = useNavigation<any>();
 
   const handleSendCashu = async () => {
@@ -25,13 +25,13 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <Image source={welcomeImage} style={styles.welcomeImage} resizeMode="contain" />
       <Text style={styles.title}>Cashu Cloak</Text>
-      <Text style={styles.subtitle}>Your secure BTC mobile wallet</Text>
+      <Text style={styles.subtitle}>Choose your action</Text>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Cloak')}>
-        <Text style={styles.buttonText}>Cloak Image</Text>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('GenerateInvoice')}>
+        <Text style={styles.buttonText}>Receive BTC</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('RevealInvoice')}>
-        <Text style={styles.buttonText}>Uncloak Image</Text>
+      <TouchableOpacity style={styles.button} onPress={handleSendCashu}>
+        <Text style={styles.buttonText}>Send BTC</Text>
       </TouchableOpacity>
     </View>
   );
@@ -79,4 +79,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default CloakScreen; 

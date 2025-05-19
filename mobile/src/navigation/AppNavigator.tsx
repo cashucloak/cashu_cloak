@@ -12,8 +12,10 @@ import GenerateInvoiceScreen from '../screens/GenerateInvoiceScreen';
 import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import SendCashuScreen from '../screens/SendCashuScreen';
-import WelcomeScreen from '../screens/WelcomeScreen';
+import DescriptionScreen from '../screens/DescriptionScreen';
 import ProcessScreen from '../screens/ProcessScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
+import CloakScreen from '../screens/CloakScreen';
 
 // Custom theme that extends the navigation dark theme with our colors
 const CashuTheme = {
@@ -46,6 +48,7 @@ const HomeStackScreen = () => (
     <HomeStack.Screen name="GenerateInvoice" component={GenerateInvoiceScreen} />
     <HomeStack.Screen name="RevealInvoice" component={RevealInvoiceScreen} />
     <HomeStack.Screen name="SendCashu" component={SendCashuScreen} />
+    <HomeStack.Screen name="Cloak" component={CloakScreen} />
   </HomeStack.Navigator>
 );
 
@@ -56,7 +59,7 @@ MaterialIcons.loadFont().catch(error => {
 
 const TabNavigator = () => (
   <Tab.Navigator
-    initialRouteName="Wallet"
+    initialRouteName="HomeTab"
     tabBar={props => <CustomTabBar {...props} />}
     screenOptions={({ route }) => ({
       tabBarIcon: ({ color, size }) => {
@@ -98,6 +101,7 @@ const AppNavigator = () => {
         }}
       >
         <MainStack.Screen name="Welcome" component={WelcomeScreen} />
+        <MainStack.Screen name="Description" component={DescriptionScreen} />
         <MainStack.Screen name="Process" component={ProcessScreen} />
         <MainStack.Screen name="Wallet" component={WalletScreen} />
         <MainStack.Screen name="MainApp" component={TabNavigator} />

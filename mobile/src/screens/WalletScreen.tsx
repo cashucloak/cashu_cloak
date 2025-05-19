@@ -33,7 +33,7 @@ const WalletScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
   // Active tab
-  const [activeTab, setActiveTab] = useState<Tab>('receive');
+  const [activeTab, setActiveTab] = useState<Tab>('send');
 
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
 
@@ -84,7 +84,7 @@ const WalletScreen: React.FC = () => {
       setReceiveResult(`Token redeemed successfully!\nNew Balance: ${newBalance} sat`);
       setReceiveToken('');
     } catch (err: any) {
-      setReceiveError(err.message || 'Failed to redeem token');
+      setReceiveError(err.message || 'Failed to receive BTC');
     } finally {
       setReceiveLoading(false);
     }
@@ -152,7 +152,7 @@ const WalletScreen: React.FC = () => {
         }
       }, 5000);
     } catch (err: any) {
-      setPayError(err.message || 'Failed to pay invoice');
+      setPayError(err.message || 'Failed to send BTC');
     } finally {
       setPayLoading(false);
     }
@@ -173,7 +173,7 @@ const WalletScreen: React.FC = () => {
         onPress={handleReceive}
         disabled={receiveLoading || !receiveToken}
       >
-        <Text style={styles.buttonText}>Redeem Token</Text>
+        <Text style={styles.buttonText}>Receive BTC</Text>
       </TouchableOpacity>
       {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
       {receiveError && <Text style={styles.error}>{receiveError}</Text>}
@@ -196,7 +196,7 @@ const WalletScreen: React.FC = () => {
         onPress={handlePayInvoice}
         disabled={payLoading || !payInvoice}
       >
-        <Text style={styles.buttonText}>Pay Invoice</Text>
+        <Text style={styles.buttonText}>Send BTC</Text>
       </TouchableOpacity>
       {payLoading && <ActivityIndicator size="large" color="#007AFF" />}
       {payError && <Text style={styles.error}>{payError}</Text>}
