@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Image, TextInput, StyleSheet, Alert, ActivityIndicator, Modal } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
 import { createLightningInvoice, getBalance, checkInvoiceStatus } from '../services/api';
@@ -72,37 +72,63 @@ const GenerateInvoiceScreen = () => {
       const invoice = data.payment_request || data.invoice || JSON.stringify(data);
       setGeneratedInvoice(invoice);
       await hideToken(invoice, selectedImage);
+
+      // 1. Get the initial balance before polling
+      const balanceData = await getBalance();
+      const initialBalance = balanceData.mints && balanceData.mints[selectedMint]
+        ? balanceData.mints[selectedMint].available
+        : 0;
+
       setModalVisible(true);
 
-      // Start polling for invoice status
+      // 2. Start polling for invoice status and balance
       let pollCount = 0;
       const maxPolls = 60; // 5 minutes if polling every 5 seconds
 
       const pollInterval = setInterval(async () => {
         pollCount++;
         try {
+          // Check invoice status as before
           const status = await checkInvoiceStatus(invoice, selectedMint);
-          if (status && status.result === 'SETTLED') {
+
+          // Check current balance
+          const balanceData = await getBalance();
+          const newBalance = balanceData.mints && balanceData.mints[selectedMint]
+            ? balanceData.mints[selectedMint].available
+            : 0;
+
+          // If invoice is settled or balance increased, stop polling and show success
+          if ((status && status.result === 'SETTLED') || newBalance > initialBalance) {
             clearInterval(pollInterval);
             setModalVisible(false);
-            Alert.alert('Success!', 'Payment received and tokens claimed successfully!', [
+            Alert.alert('Success!', 'Payment received and tokens claimed', [
               { text: 'OK', onPress: () => navigation.navigate('Home') }
             ]);
+            return;
           }
         } catch (error) {
-          // Optionally handle error
+          clearInterval(pollInterval);
+          setModalVisible(false);
+          Alert.alert(
+            'Error',
+            'There was a problem checking the invoice status. Please check your balance manually.'
+          );
+          return;
         }
         if (pollCount >= maxPolls) {
           clearInterval(pollInterval);
+          setModalVisible(false);
+          Alert.alert('Timeout', 'Invoice polling timed out. Please check your balance manually.');
         }
       }, 5000);
+
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to generate invoice');
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       {selectedImage && (
         <Image source={{ uri: selectedImage }} style={styles.image} />
       )}
@@ -115,7 +141,7 @@ const GenerateInvoiceScreen = () => {
         onChangeText={setAmount}
       />
       {mintLoading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginVertical: 10 }} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : availableMints.length > 1 ? (
         <Picker
           selectedValue={selectedMint}
@@ -135,6 +161,11 @@ const GenerateInvoiceScreen = () => {
       >
         <Text style={styles.buttonText}>Generate & Cloak</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={pickImage}>
+        <Text style={styles.buttonText}>Select Different Image</Text>
+      </TouchableOpacity>
+      {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
@@ -154,46 +185,22 @@ const GenerateInvoiceScreen = () => {
           </View>
         </View>
       </Modal>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Different Image</Text>
-      </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flexGrow: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    padding: theme.spacing.m,
-    backgroundColor: theme.colors.background,
-  },
-  title: { 
-    fontSize: theme.typography.fontSizes.xlarge, 
-    fontWeight: 'bold', 
-    marginBottom: theme.spacing.m,
-    color: theme.colors.text,
-  },
-  button: { 
-    backgroundColor: theme.colors.primary, 
-    padding: theme.spacing.m, 
-    borderRadius: theme.borderRadius.medium, 
-    marginVertical: theme.spacing.s, 
-    width: '100%', 
+  container: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadows.medium,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.m,
   },
-  buttonText: { 
-    color: theme.colors.buttonText, 
-    fontSize: theme.typography.fontSizes.medium, 
-    fontWeight: 'bold',
-  },
-  image: { 
-    width: 300, 
-    height: 300, 
-    borderRadius: theme.borderRadius.medium, 
+  image: {
+    width: 300,
+    height: 300,
+    borderRadius: theme.borderRadius.medium,
     marginBottom: theme.spacing.m,
   },
   input: {
@@ -208,30 +215,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     color: theme.colors.text,
   },
-  mintLabel: {
-    fontSize: theme.typography.fontSizes.medium,
-    marginBottom: theme.spacing.s,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  invoiceBox: {
-    backgroundColor: theme.colors.card,
+  button: {
+    backgroundColor: theme.colors.primary,
     padding: theme.spacing.m,
-    borderRadius: theme.borderRadius.small,
-    marginTop: theme.spacing.m,
-    marginBottom: theme.spacing.s,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
     width: '100%',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    alignItems: 'center',
+    ...theme.shadows.medium,
   },
-  invoiceLabel: {
-    fontWeight: 'bold',
-    marginBottom: theme.spacing.xs,
-    color: theme.colors.text,
-  },
-  invoiceText: {
+  buttonText: {
+    color: theme.colors.buttonText,
     fontSize: theme.typography.fontSizes.medium,
-    color: theme.colors.textSecondary,
+    fontWeight: 'bold',
   },
   modal: {
     flex: 1,
@@ -259,11 +255,22 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.m,
     textAlign: 'center',
   },
+  invoiceBox: {
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.small,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  invoiceText: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+  },
   modalButtonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginTop: theme.spacing.m,
   },
   flatButtonText: {
     color: theme.colors.primary,

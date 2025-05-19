@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getBalance, receiveCashuToken, payLightningInvoice } from '../services/api';
@@ -141,6 +142,52 @@ const WalletScreen: React.FC = () => {
       } else {
         setPayResult(data.state);
       }
+
+      // After generating the invoice, before starting the poll interval:
+      const balanceData = await getBalance();
+      const initialBalance = balanceData.mints && balanceData.mints[selectedMint]
+        ? balanceData.mints[selectedMint].available
+        : 0;
+
+      let pollCount = 0;
+      const maxPolls = 60; // 5 minutes if polling every 5 seconds
+
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+          // Check invoice status as before
+          const status = await checkInvoiceStatus(payInvoice, selectedMint);
+
+          // Check current balance
+          const balanceData = await getBalance();
+          const newBalance = balanceData.mints && balanceData.mints[selectedMint]
+            ? balanceData.mints[selectedMint].available
+            : 0;
+
+          // If invoice is settled or balance increased, stop polling and show success
+          if ((status && status.result === 'SETTLED') || newBalance > initialBalance) {
+            clearInterval(pollInterval);
+            setModalVisible(false);
+            Alert.alert('Success!', 'Payment received and tokens claimed successfully!', [
+              { text: 'OK', onPress: () => navigation.navigate('Home') }
+            ]);
+            return;
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          setModalVisible(false);
+          Alert.alert(
+            'Error',
+            'There was a problem checking the invoice status. Please check your balance manually.'
+          );
+          return;
+        }
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          setModalVisible(false);
+          Alert.alert('Timeout', 'Invoice polling timed out. Please check your balance manually.');
+        }
+      }, 5000);
     } catch (err: any) {
       setPayError(err.message || 'Failed to pay invoice');
     } finally {
