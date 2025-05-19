@@ -9,13 +9,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, sendCashu, payLightningInvoice, createLightningInvoice, checkInvoiceStatus } from '../services/api';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker';
+import { getBalance, receiveCashuToken, payLightningInvoice } from '../services/api';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { theme } from '../theme';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
-type Tab = 'balance' | 'send' | 'invoice';
+type Tab = 'balance' | 'send' | 'receive';
 
 type MintData = {
   available: number;
@@ -29,40 +29,30 @@ type Mint = {
 };
 
 const WalletScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+
   // Balance state
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [balanceError, setBalanceError] = useState<string | null>(null);
 
-  // Send state
-  const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState('');
-  const [sendSuccess, setSendSuccess] = useState<string | null>(null);
-  const [sendLoading, setSendLoading] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-
-  // Receive state (was Pay)
-  const [invoice, setInvoice] = useState('');
-  const [invoiceResult, setInvoiceResult] = useState<string | null>(null);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
-  const [invoiceError, setInvoiceError] = useState<string | null>(null);
-
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('balance');
 
-  // New receive state
-  const [receiveAmount, setReceiveAmount] = useState('');
-  const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
-  const [invoiceId, setInvoiceId] = useState<string | null>(null);
-
-  const [availableMints, setAvailableMints] = useState<Mint[]>([]);
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
 
-  // Add state
-  const [checkingInvoice, setCheckingInvoice] = useState(false);
-  const [invoicePaid, setInvoicePaid] = useState(false);
+  // Receive state
+  const [receiveToken, setReceiveToken] = useState('');
+  const [receiveResult, setReceiveResult] = useState<string | null>(null);
+  const [receiveLoading, setReceiveLoading] = useState(false);
+  const [receiveError, setReceiveError] = useState<string | null>(null);
 
-  const navigation = useNavigation();
+  // Pay state
+  const [payInvoice, setPayInvoice] = useState('');
+  const [payLoading, setPayLoading] = useState(false);
+  const [payResult, setPayResult] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+
   const isFocused = useIsFocused();
 
   // Fetch balance on mount and when returning to balance tab
@@ -73,7 +63,7 @@ const WalletScreen: React.FC = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'invoice') {
+    if (activeTab === 'send') {
       fetchMints();
     }
   }, [activeTab]);
@@ -111,86 +101,50 @@ const WalletScreen: React.FC = () => {
         available: data.available,
         balance: data.balance
       }));
-      setAvailableMints(mintList);
       if (mintList.length > 0) {
         setSelectedMint(mintList[0].url);
       }
     }
   };
 
-  const handleSend = async () => {
-    setSendLoading(true);
-    setSendError(null);
-    setSendSuccess(null);
+  const handleReceive = async () => {
+    setReceiveLoading(true);
+    setReceiveError(null);
+    setReceiveResult(null);
     try {
-      const data = await sendCashu(Number(amount), recipient, selectedMint || undefined);
-      setSendSuccess(`Sent ${amount} sats to ${recipient}. Token: ${data.token || JSON.stringify(data)}`);
-      setAmount('');
-      setRecipient('');
-      await fetchBalance();
+      const data = await receiveCashuToken(receiveToken);
+      // Get new balance after receiving token
+      const balanceData = await getBalance();
+      const newBalance = balanceData.mints ? (Object.values(balanceData.mints)[0] as { available: number }).available : 0;
+      setReceiveResult(`Token redeemed successfully!\nNew Balance: ${newBalance} sat`);
+      setReceiveToken('');
     } catch (err: any) {
-      setSendError(err.message || 'Failed to send sats');
+      setReceiveError(err.message || 'Failed to redeem token');
     } finally {
-      setSendLoading(false);
+      setReceiveLoading(false);
     }
   };
 
-  const handleInvoice = async () => {
-    setInvoiceLoading(true);
-    setInvoiceError(null);
-    setInvoiceResult(null);
+  const handlePayInvoice = async () => {
+    setPayLoading(true);
+    setPayError(null);
+    setPayResult(null);
     try {
-      const data = await payLightningInvoice(invoice);
-      setInvoiceResult(JSON.stringify(data));
-      setInvoice('');
-      await fetchBalance();
+      const data = await payLightningInvoice(payInvoice);
+      if (data.state === 'paid') {
+        setPayResult('Invoice paid successfully!');
+        await fetchBalance();
+      } else if (data.state === 'pending') {
+        setPayResult('Invoice is pending.');
+      } else if (data.state === 'unpaid') {
+        setPayResult('Invoice is unpaid.');
+      } else {
+        setPayResult(data.state);
+      }
     } catch (err: any) {
-      setInvoiceError(err.message || 'Failed to process invoice');
+      setPayError(err.message || 'Failed to pay invoice');
     } finally {
-      setInvoiceLoading(false);
-    }
-  };
-
-  const handleGenerateInvoice = async () => {
-    setInvoiceLoading(true);
-    setInvoiceError(null);
-    setGeneratedInvoice(null);
-    setInvoiceId(null);
-    setCheckingInvoice(false);
-    setInvoicePaid(false);
-    try {
-      const data = await createLightningInvoice(Number(receiveAmount), selectedMint);
-      setGeneratedInvoice(data.payment_request || data.invoice || JSON.stringify(data));
-      if (data.quote) setInvoiceId(data.quote);
-      setCheckingInvoice(true);
-      let pollCount = 0;
-      const maxPolls = 60; // 5 minutes if polling every 5 seconds
-
-      const pollInterval = setInterval(async () => {
-        pollCount++;
-        try {
-          // Call your backend to check invoice status
-          const status = await checkInvoiceStatus(data.payment_request, selectedMint);
-          if (status && status.result === 'SETTLED') {
-            clearInterval(pollInterval);
-            setCheckingInvoice(false);
-            setInvoicePaid(true);
-            fetchBalance();
-            setInvoiceResult('Payment received and tokens claimed successfully!');
-          }
-        } catch (error) {
-          // handle error if needed
-        }
-        if (pollCount >= maxPolls) {
-          clearInterval(pollInterval);
-          setCheckingInvoice(false);
-        }
-      }, 5000);
-
-    } catch (err: any) {
-      setInvoiceError(err.message || 'Failed to generate invoice');
-    } finally {
-      setInvoiceLoading(false);
+      setPayLoading(false);
     }
   };
 
@@ -211,78 +165,51 @@ const WalletScreen: React.FC = () => {
     </View>
   );
 
-  const renderSend = () => (
-    <View style={styles.tabContent}>
+  const renderReceive = () => (
+    <View style={styles.tabContent}>      
       <TextInput
-        style={styles.input}
-        placeholder="Amount (sats)"
-        keyboardType="numeric"
-        value={amount}
-        onChangeText={setAmount}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Recipient (pubkey or address)"
-        value={recipient}
-        onChangeText={setRecipient}
+        style={[styles.input, styles.invoiceInput]}
+        placeholder="Paste Cashu Token"
+        placeholderTextColor={theme.colors.placeholder}
+        multiline
+        value={receiveToken}
+        onChangeText={setReceiveToken}
       />
       <TouchableOpacity
         style={styles.button}
-        onPress={handleSend}
-        disabled={sendLoading || !amount || !recipient}
+        onPress={handleReceive}
+        disabled={receiveLoading || !receiveToken}
       >
-        <Text style={styles.buttonText}>Send</Text>
+        <Text style={styles.buttonText}>Redeem Token</Text>
       </TouchableOpacity>
-      {sendLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {sendError && <Text style={styles.error}>{sendError}</Text>}
-      {sendSuccess && <Text style={styles.success}>{sendSuccess}</Text>}
+      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
+      {receiveResult && <Text style={styles.invoice}>{receiveResult}</Text>}
     </View>
   );
 
-  const renderInvoice = () => {
-    // Find the selected mint object
-    const selectedMintObj = availableMints.find(m => m.url === selectedMint);
-    return (
-      <View style={styles.tabContent}>
-        <TextInput
-          style={styles.input}
-          placeholder="Amount (sats)"
-          keyboardType="numeric"
-          value={receiveAmount}
-          onChangeText={setReceiveAmount}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleGenerateInvoice}
-          disabled={invoiceLoading || !receiveAmount}
-        >
-          <Text style={styles.buttonText}>Generate Invoice</Text>
-        </TouchableOpacity>
-
-        {invoiceLoading && <ActivityIndicator size="large" color="#007AFF" />}
-        {invoiceError && <Text style={styles.error}>{invoiceError}</Text>}
-        {generatedInvoice && selectedMintObj && (
-          <View style={styles.tokenBox}>
-            <Text style={styles.tokenLabel}>Invoice</Text>
-            <Text selectable style={styles.token}>{generatedInvoice}</Text>
-            {/* {invoiceId && (
-              <Text style={styles.invoiceCmd}>
-                Command to check invoice: cashu invoice {receiveAmount} --id {invoiceId}
-              </Text>
-            )} */}
-          </View>
-        )}
-
-        {/* {checkingInvoice && (
-          <Text style={styles.checkingInvoice}>Checking invoice...</Text>
-        )} */}
-        {invoicePaid && (
-          <Text style={styles.invoicePaid}>Invoice paid!</Text>
-        )}
-      </View>
-    );
-  };
+  const renderPayInvoice = () => (
+    <View style={styles.tabContent}>
+      <TextInput
+        style={[styles.input, styles.invoiceInput]}
+        placeholder="Paste Lightning Invoice"
+        placeholderTextColor={theme.colors.placeholder}
+        multiline
+        value={payInvoice}
+        onChangeText={setPayInvoice}
+      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handlePayInvoice}
+        disabled={payLoading || !payInvoice}
+      >
+        <Text style={styles.buttonText}>Pay Invoice</Text>
+      </TouchableOpacity>
+      {payLoading && <ActivityIndicator size="large" color="#007AFF" />}
+      {payError && <Text style={styles.error}>{payError}</Text>}
+      {payResult && <Text style={[styles.success, { textAlign: 'center' }]}>{payResult}</Text>}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -297,6 +224,14 @@ const WalletScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'receive' && styles.activeTab]}
+          onPress={() => setActiveTab('receive')}
+        >
+          <Text style={[styles.tabText, activeTab === 'receive' && styles.activeTabText]}>
+            Receive
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'send' && styles.activeTab]}
           onPress={() => setActiveTab('send')}
         >
@@ -304,20 +239,12 @@ const WalletScreen: React.FC = () => {
             Send
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'invoice' && styles.activeTab]}
-          onPress={() => setActiveTab('invoice')}
-        >
-          <Text style={[styles.tabText, activeTab === 'invoice' && styles.activeTabText]}>
-            Invoice
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         {activeTab === 'balance' && renderBalance()}
-        {activeTab === 'send' && renderSend()}
-        {activeTab === 'invoice' && renderInvoice()}
+        {activeTab === 'receive' && renderReceive()}
+        {activeTab === 'send' && renderPayInvoice()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -326,196 +253,130 @@ const WalletScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   header: {
-    padding: 20,
+    padding: theme.spacing.m,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: theme.colors.border,
   },
   title: {
-    fontSize: 24,
+    fontSize: theme.typography.fontSizes.xlarge,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: theme.colors.text,
   },
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.card,
   },
   tab: {
     flex: 1,
-    paddingVertical: 15,
+    paddingVertical: theme.spacing.m,
     alignItems: 'center',
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: '#007AFF',
+    borderBottomColor: theme.colors.primary,
   },
   tabText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
   activeTabText: {
-    color: '#007AFF',
+    color: theme.colors.primary,
     fontWeight: '600',
   },
   content: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   tabContent: {
-    padding: 20,
-  },
-  mint: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-    textAlign: 'center',
+    padding: theme.spacing.m,
   },
   balance: {
-    fontSize: 32,
+    fontSize: theme.typography.fontSizes.xxlarge,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: theme.colors.primary,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: theme.spacing.s,
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
-    fontSize: 18,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
+    backgroundColor: theme.colors.card,
+    color: theme.colors.text,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
     width: '100%',
     alignItems: 'center',
+    ...theme.shadows.medium,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: theme.colors.buttonText,
+    fontSize: theme.typography.fontSizes.medium,
     fontWeight: '600',
   },
   success: {
-    marginTop: 20,
-    fontSize: 16,
-    color: 'green',
-    backgroundColor: '#e0ffe0',
-    padding: 10,
-    borderRadius: 8,
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.success,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
   },
   error: {
-    color: 'red',
-    marginTop: 20,
-    fontSize: 16,
+    color: theme.colors.error,
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
     textAlign: 'center',
   },
   tokenBox: {
-    marginTop: 20,
-    padding: 10,
+    marginTop: theme.spacing.m,
+    padding: theme.spacing.m,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.medium,
+    backgroundColor: theme.colors.card,
   },
   tokenLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.fontSizes.small,
     fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 10,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.s,
   },
   token: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
   },
-  mintSelector: {
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+  invoiceInput: {
+    height: 100,
+    textAlignVertical: 'top',
   },
-  mintLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  selectedMintBox: {
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  selectedMintLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  selectedMintUrl: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 5,
-  },
-  selectedMintBalance: {
-    fontSize: 14,
-    color: '#333',
-  },
-  picker: {
-    width: '100%',
-  },
-  mintBalances: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-  },
-  mintBalancesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  mintBalanceItem: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  mintBalanceText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 5,
-  },
-  mintUrl: {
-    fontSize: 12,
-    color: '#666',
-  },
-  invoiceCmd: {
-    marginTop: 10,
-    fontSize: 13,
-    color: '#555',
-    fontStyle: 'italic',
-  },
-  checkingInvoice: {
-    marginTop: 20,
-    fontSize: 16,
-    color: '#007AFF',
+  invoice: {
+    marginTop: theme.spacing.m,
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  invoicePaid: {
-    marginTop: 20,
-    fontSize: 16,
-    color: 'green',
+  titleWithMargin: {
+    fontSize: theme.typography.fontSizes.xlarge,
+    fontWeight: 'bold',
     textAlign: 'center',
-  },
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
+  }
 });
 
 export default WalletScreen; 

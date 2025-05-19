@@ -6,7 +6,7 @@ from os import listdir
 from os.path import isdir, join
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Body
 
 from ...core.base import Token, TokenV3
 from ...core.helpers import sum_proofs
@@ -472,3 +472,27 @@ async def info():
         nostr_relays=nostr_relays,
         socks_proxy=settings.socks_proxy,
     )
+
+
+@router.post("/melt/pay_invoice", name="Pay Lightning invoice (melt)")
+async def pay_invoice(
+    invoice: str = Body(..., embed=True, description="Lightning invoice to pay"),
+    amount: Optional[int] = Body(None, embed=True, description="Amount to pay (optional)"),
+):
+    global wallet
+    # Get a melt quote for the invoice and amount
+    quote = await wallet.melt_quote(invoice, amount)
+    total_amount = quote.amount + quote.fee_reserve
+    # Select proofs to cover the total amount (including fees)
+    send_proofs, _ = await wallet.select_to_send(wallet.proofs, total_amount, include_fees=True, set_reserved=True)
+    # Pay the invoice using the selected proofs and quote
+    melt_response = await wallet.melt(send_proofs, invoice, quote.fee_reserve, quote.quote)
+    # Return the result
+    return {
+        "state": getattr(melt_response, "state", None),
+        "payment_preimage": getattr(melt_response, "payment_preimage", None),
+        "quote": quote.quote,
+        "amount": quote.amount,
+        "fee_reserve": quote.fee_reserve,
+        # Add more fields as needed
+    }

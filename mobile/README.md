@@ -16,6 +16,16 @@ If you want to stop ``` brew services stop tor ```
 ```cd mobile```
 ```npx react-native run-android```
 
+Libraries used
+    * https://github.com/cashubtc/nutshell 
+    * https://github.com/steganogram/stegano-rs 
+
+Other great resources reference
+    * https://github.com/cashubtc/awesome-cashu 
+    * https://github.com/jhugman/uniffi-bindgen-react-native 
+    * https://github.com/minibits-cash/minibits_wallet
+    * https://github.com/wrapnuts/wrapnuts/tree/main 
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

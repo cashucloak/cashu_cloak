@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView, Modal } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSteganography } from '../hooks/useSteganography';
 import { createLightningInvoice, getBalance, checkInvoiceStatus } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { theme } from '../theme';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
@@ -24,6 +26,8 @@ const GenerateInvoiceScreen = () => {
   const [availableMints, setAvailableMints] = useState<Mint[]>([]);
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
   const [mintLoading, setMintLoading] = useState(true);
+  const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -66,7 +70,9 @@ const GenerateInvoiceScreen = () => {
     try {
       const data = await createLightningInvoice(Number(amount), selectedMint);
       const invoice = data.payment_request || data.invoice || JSON.stringify(data);
+      setGeneratedInvoice(invoice);
       await hideToken(invoice, selectedImage);
+      setModalVisible(true);
 
       // Start polling for invoice status
       let pollCount = 0;
@@ -78,6 +84,7 @@ const GenerateInvoiceScreen = () => {
           const status = await checkInvoiceStatus(invoice, selectedMint);
           if (status && status.result === 'SETTLED') {
             clearInterval(pollInterval);
+            setModalVisible(false);
             Alert.alert('Success!', 'Payment received and tokens claimed successfully!', [
               { text: 'OK', onPress: () => navigation.navigate('Home') }
             ]);
@@ -89,11 +96,6 @@ const GenerateInvoiceScreen = () => {
           clearInterval(pollInterval);
         }
       }, 5000);
-
-      // Optionally show a message that invoice is being checked
-      Alert.alert('Invoice Generated!', 'Invoice hidden in image. Waiting for payment...', [
-        { text: 'OK', onPress: () => navigation.navigate('Home') }
-      ]);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to generate invoice');
     }
@@ -101,27 +103,29 @@ const GenerateInvoiceScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Generate & Hide Invoice</Text>
+      <Text style={styles.title}>Cloak Invoice to Receive</Text>
       {selectedImage && (
         <Image source={{ uri: selectedImage }} style={styles.image} />
       )}
       <TextInput
         style={styles.input}
-        placeholder="Input amount (sats) to Invoice"
+        placeholder="Amount (sats) to Receive"
+        placeholderTextColor={theme.colors.placeholder}
         keyboardType="numeric"
         value={amount}
         onChangeText={setAmount}
       />
       {mintLoading ? (
-        <ActivityIndicator size="large" color="#007AFF" style={{ marginVertical: 10 }} />
+        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginVertical: 10 }} />
       ) : availableMints.length > 1 ? (
         <Picker
           selectedValue={selectedMint}
           onValueChange={setSelectedMint}
           style={styles.input}
+          dropdownIconColor={theme.colors.text}
         >
           {availableMints.map((mint) => (
-            <Picker.Item key={mint.url} label={mint.url} value={mint.url} />
+            <Picker.Item key={mint.url} label={mint.url} value={mint.url} color={theme.colors.text} />
           ))}
         </Picker>
       ) : null}
@@ -130,37 +134,144 @@ const GenerateInvoiceScreen = () => {
         onPress={handleGenerateInvoice}
         disabled={loading || !amount || !selectedImage}
       >
-        <Text style={styles.buttonText}>Cloak Invoice</Text>
+        <Text style={styles.buttonText}>Generate & Cloak Invoice</Text>
       </TouchableOpacity>
+      <Modal visible={modalVisible} transparent>
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Invoice Generated!</Text>
+            <Text style={styles.modalMessage}>Invoice hidden in image. Waiting for payment...</Text>
+            <View style={styles.invoiceBox}>
+              <Text style={styles.invoiceLabel}>Invoice:</Text>
+              <Text selectable style={styles.invoiceText}>{generatedInvoice}</Text>
+            </View>
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity onPress={() => Clipboard.setString(generatedInvoice || '')}>
+                <Text style={styles.flatButtonText}>Copy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.navigate('Home'); }}>
+                <Text style={styles.flatButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <TouchableOpacity style={styles.button} onPress={pickImage}>
         <Text style={styles.buttonText}>Select Different Image</Text>
       </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 20 }} />}
+      {loading && <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  button: { backgroundColor: '#007AFF', padding: 15, borderRadius: 10, marginVertical: 10, width: '100%', alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  image: { width: 300, height: 300, borderRadius: 10, marginBottom: 20 },
+  container: { 
+    flexGrow: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: theme.spacing.m,
+    backgroundColor: theme.colors.background,
+  },
+  title: { 
+    fontSize: theme.typography.fontSizes.xlarge, 
+    fontWeight: 'bold', 
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
+  },
+  button: { 
+    backgroundColor: theme.colors.primary, 
+    padding: theme.spacing.m, 
+    borderRadius: theme.borderRadius.medium, 
+    marginVertical: theme.spacing.s, 
+    width: '100%', 
+    alignItems: 'center',
+    ...theme.shadows.medium,
+  },
+  buttonText: { 
+    color: theme.colors.buttonText, 
+    fontSize: theme.typography.fontSizes.medium, 
+    fontWeight: 'bold',
+  },
+  image: { 
+    width: 300, 
+    height: 300, 
+    borderRadius: theme.borderRadius.medium, 
+    marginBottom: theme.spacing.m,
+  },
   input: {
     width: '100%',
     height: 40,
-    borderColor: 'gray',
+    borderColor: theme.colors.border,
     borderWidth: 1,
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: theme.spacing.s,
+    padding: theme.spacing.s,
+    borderRadius: theme.borderRadius.small,
     textAlign: 'center',
+    backgroundColor: theme.colors.card,
+    color: theme.colors.text,
   },
   mintLabel: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#333',
+    fontSize: theme.typography.fontSizes.medium,
+    marginBottom: theme.spacing.s,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  invoiceBox: {
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.small,
+    marginTop: theme.spacing.m,
+    marginBottom: theme.spacing.s,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  invoiceLabel: {
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.xs,
+    color: theme.colors.text,
+  },
+  invoiceText: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+  },
+  modal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.large,
+    alignItems: 'center',
+    minWidth: 300,
+    ...theme.shadows.large,
+  },
+  modalTitle: {
+    fontSize: theme.typography.fontSizes.xlarge,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
+  },
+  modalMessage: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: theme.spacing.m,
+  },
+  flatButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginHorizontal: theme.spacing.m,
   },
 });
 

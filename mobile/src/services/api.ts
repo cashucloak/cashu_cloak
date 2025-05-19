@@ -1,8 +1,7 @@
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
-
-const API_URL = 'http://10.0.2.2:4448'; // Android emulator localhost address for wallet API
+import { API_URL } from '@env';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -30,7 +29,7 @@ export const steganographyService = {
       });
 
       // Use fetch for binary response
-      const response = await fetch('http://10.0.2.2:4448/steganography/hide', {
+      const response = await fetch(`${API_URL}/steganography/hide`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -126,23 +125,27 @@ export const requestMintQuote = async (amount: number, unit: string = 'sat', des
 
 // Pay a Lightning invoice (melt)
 export const payLightningInvoice = async (invoice: string) => {
-  // First get a melt quote
-  const quoteRes = await api.post('/v1/melt/quote/bolt11', { request: invoice, unit: 'sat' });
-  const quote = quoteRes.data.quote;
-  
-  // Then actually pay
-  const response = await api.post('/v1/melt/bolt11', { 
-    quote: quote,
-    inputs: [], // The wallet will handle this
-    outputs: [] // The wallet will handle this
-  });
+  const response = await api.post('/melt/pay_invoice', { invoice });
   return response.data;
-}; 
+};
 
 // Check Lightning invoice status
 export const checkInvoiceStatus = async (payment_request: string, mint?: string) => {
   const params: any = { payment_request };
   if (mint) params.mint = mint;
   const response = await api.get('/lightning/invoice_state', { params });
+  return response.data;
+};
+
+export const redeemCashuToken = async (token: string, mint?: string) => {
+  let url = '/receive?token=' + encodeURIComponent(token);
+  // If you want to support multiple mints, add mint param if needed
+  if (mint) url += '&mint=' + encodeURIComponent(mint);
+  const response = await api.post(url);
+  return response.data;
+};
+
+export const receiveCashuToken = async (token: string) => {
+  const response = await api.post(`/receive?token=${encodeURIComponent(token)}`);
   return response.data;
 };
