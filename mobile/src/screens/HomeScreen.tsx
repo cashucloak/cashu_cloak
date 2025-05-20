@@ -27,7 +27,7 @@ const HomeScreen = () => {
       <Text style={styles.title}>Cashu Cloak</Text>
       <Text style={styles.subtitle}>Your secure BTC mobile wallet</Text>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Cloak')}>
+      <TouchableOpacity style={styles.button} onPress={handleSendCashu}>
         <Text style={styles.buttonText}>Cloak Image</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('RevealInvoice')}>

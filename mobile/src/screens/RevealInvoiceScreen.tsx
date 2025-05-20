@@ -5,6 +5,7 @@ import { useSteganography } from '../hooks/useSteganography';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
+import { receiveCashuToken, getBalance } from '../services/api';
 
 const RevealInvoiceScreen = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -15,6 +16,9 @@ const RevealInvoiceScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [revealedInvoice, setRevealedInvoice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemResult, setRedeemResult] = useState<string | null>(null);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -41,6 +45,25 @@ const RevealInvoiceScreen = () => {
     }
   };
 
+  const handleRedeemToken = async () => {
+    if (!revealedInvoice) return;
+    setRedeemLoading(true);
+    setRedeemError(null);
+    setRedeemResult(null);
+    setModalVisible(false);
+    try {
+      const data = await receiveCashuToken(revealedInvoice);
+      // Get new balance after receiving token
+      const balanceData = await getBalance();
+      const newBalance = balanceData.mints ? (Object.values(balanceData.mints)[0] as { available: number }).available : 0;
+      setRedeemResult('Token Received');
+    } catch (err: any) {
+      setRedeemError(err.message || 'Failed to receive BTC');
+    } finally {
+      setRedeemLoading(false);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {selectedImage && (
@@ -57,24 +80,37 @@ const RevealInvoiceScreen = () => {
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {error && <Text style={styles.error}>{error}</Text>}
+      {redeemLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+      {redeemError && <Text style={styles.error}>{redeemError}</Text>}
+      {redeemResult && <Text style={styles.success}>{redeemResult}</Text>}
 
       <Modal visible={modalVisible} transparent>
-        <View style={styles.modal}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Uncloaked Image!</Text>
-            <View style={styles.invoiceBox}>
-              <Text selectable style={styles.invoiceText}>{revealedInvoice}</Text>
+        <TouchableOpacity 
+          style={styles.modal} 
+          activeOpacity={1} 
+          onPress={() => setModalVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={e => e.stopPropagation()}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Uncloaked Image!</Text>
+              <View style={styles.invoiceBox}>
+                <Text selectable style={styles.invoiceText}>{revealedInvoice}</Text>
+              </View>
+              <View style={styles.modalButtonRow}>
+                <TouchableOpacity 
+                  style={styles.modalButton} 
+                  onPress={handleRedeemToken} 
+                  disabled={redeemLoading}
+                >
+                  <Text style={styles.buttonText}>Redeem BTC</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity onPress={() => Clipboard.setString(revealedInvoice || '')}>
-                <Text style={styles.flatButtonText}>Copy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.navigate('Home'); }}>
-                <Text style={styles.flatButtonText}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </ScrollView>
   );
@@ -144,8 +180,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     marginVertical: theme.spacing.s,
-    width: '100%',
+    width: '57.5%',
     alignItems: 'center',
+    ...theme.shadows.medium,
   },
   modalButtonText: {
     color: theme.colors.buttonText,
@@ -166,7 +203,7 @@ const styles = StyleSheet.create({
   },
   modalButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     width: '100%',
   },
   flatButtonText: {
@@ -179,6 +216,17 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: theme.typography.fontSizes.medium,
     marginTop: theme.spacing.m,
+  },
+  invoice: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.m,
+  },
+  success: {
+    color: theme.colors.success,
+    fontSize: theme.typography.fontSizes.medium,
+    marginTop: theme.spacing.m,
+    textAlign: 'center',
   },
 });
 
