@@ -14,6 +14,7 @@ const RevealInvoiceScreen = () => {
   const navigation = useNavigation<any>();
   const [modalVisible, setModalVisible] = useState(false);
   const [revealedInvoice, setRevealedInvoice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
@@ -36,33 +37,31 @@ const RevealInvoiceScreen = () => {
       setRevealedInvoice(revealed);
       setModalVisible(true);
     } catch (err) {
-      Alert.alert('Error', 'Failed to reveal invoice from image');
+      setError('Failed to Uncloak Image');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Reveal Invoice</Text>
-
       {selectedImage && (
-        <Image source={{ uri: selectedImage }} style={styles.image} />
+        <TouchableOpacity onPress={pickImage}>
+          <Image source={{ uri: selectedImage }} style={styles.image} />
+        </TouchableOpacity>
       )}
       <TouchableOpacity
         style={styles.button}
         onPress={handleRevealToken}
         disabled={loading || !selectedImage}
       >
-        <Text style={styles.buttonText}>Reveal Invoice</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Different Image</Text>
+        <Text style={styles.buttonText}>Uncloak Image</Text>
       </TouchableOpacity>
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+      {error && <Text style={styles.error}>{error}</Text>}
 
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Invoice Revealed!</Text>
+            <Text style={styles.modalTitle}>Uncloaked Image!</Text>
             <View style={styles.invoiceBox}>
               <Text selectable style={styles.invoiceText}>{revealedInvoice}</Text>
             </View>
@@ -95,12 +94,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.m,
     color: theme.colors.text,
   },
-  button: { 
-    backgroundColor: theme.colors.primary, 
-    padding: theme.spacing.m, 
-    borderRadius: theme.borderRadius.medium, 
-    marginVertical: theme.spacing.s, 
-    width: '100%', 
+  button: {
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    marginVertical: theme.spacing.s,
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },
@@ -175,6 +174,11 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.medium,
     fontWeight: 'bold',
     marginHorizontal: theme.spacing.m,
+  },
+  error: {
+    color: theme.colors.error,
+    fontSize: theme.typography.fontSizes.medium,
+    marginTop: theme.spacing.m,
   },
 });
 

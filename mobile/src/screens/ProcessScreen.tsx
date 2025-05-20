@@ -24,11 +24,11 @@ const ProcessScreen = () => {
         </View>
         <View style={styles.stepImageContainer}>
           <View style={styles.tokenVisual}>
-            <Text style={styles.tokenText}>Cashu Token</Text>
+            <Text style={[styles.tokenText, { textAlign: 'center' }]}>Cashu Token (BTC)</Text>
           </View>
         </View>
         <Text style={styles.stepDescription}>
-          Choose the Cashu tokens you want to send to someone privately.
+          Choose the Cashu tokens to send privately
         </Text>
       </View>
 
@@ -46,7 +46,7 @@ const ProcessScreen = () => {
           </View>
         </View>
         <Text style={styles.stepDescription}>
-          Select any image to act as the carrier for your hidden payment.
+          Select image as carrier for hidden BTC payment
         </Text>
       </View>
 
@@ -75,7 +75,7 @@ const ProcessScreen = () => {
           </View>
         </View>
         <Text style={styles.stepDescription}>
-          The app uses steganography to invisibly embed your tokens into the image.
+          The app uses steganography to invisibly embed tokens into image.
           The image looks unchanged to the human eye.
         </Text>
       </View>

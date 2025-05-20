@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { sendCashu, steganographyService } from '../services/api';
+import { sendCashu, steganographyService, getBalance } from '../services/api';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { theme } from '../theme';
 
@@ -60,27 +60,27 @@ const SendCashuScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cloak Invoice to Send</Text>
       {imageUri && (
-        <Image source={{ uri: imageUri }} style={styles.image} />
+        <TouchableOpacity onPress={pickImage}>
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        </TouchableOpacity>
       )}
-      <TextInput
-        style={styles.input}
-        placeholder="Amount (sats) to Receive"
-        placeholderTextColor={theme.colors.placeholder}
-        keyboardType="numeric"
-        value={sendAmount}
-        onChangeText={setSendAmount}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Bitcoin (sats) to Send"
+          placeholderTextColor={theme.colors.placeholder}
+          keyboardType="numeric"
+          value={sendAmount}
+          onChangeText={setSendAmount}
+        />
+      </View>
       <TouchableOpacity
         style={styles.button}
         onPress={handleSend}
         disabled={sendLoading || !sendAmount}
       >
-        <Text style={styles.buttonText}>Generate & Cloak Invoice</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Select Different Image</Text>
+        <Text style={styles.buttonText}>Cloak</Text>
       </TouchableOpacity>
       {sendLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {sendError && <Text style={styles.error}>{sendError}</Text>}
@@ -89,8 +89,8 @@ const SendCashuScreen = () => {
       <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Token Generated!</Text>
-            <Text style={styles.modalMessage}>Token hidden in image. Ready to send!</Text>
+            <Text style={styles.modalTitle}>Cashu Token Generated!</Text>
+            <Text style={styles.modalMessage}>Token hidden in image</Text>
             <View style={styles.invoiceBox}>
               <Text selectable style={styles.invoiceText}>{sendToken}</Text>
             </View>
@@ -98,7 +98,7 @@ const SendCashuScreen = () => {
               <TouchableOpacity onPress={() => Clipboard.setString(sendToken || '')}>
                 <Text style={styles.flatButtonText}>Copy</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.goBack(); }}>
+              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.navigate('Home'); }}>
                 <Text style={styles.flatButtonText}>OK</Text>
               </TouchableOpacity>
             </View>
@@ -127,26 +127,31 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: theme.borderRadius.medium,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.xl,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: theme.spacing.s,
+    alignItems: 'center',
   },
   input: {
-    width: '100%',
-    height: 40,
-    borderColor: theme.colors.border,
+    width: '57.5%',
     borderWidth: 1,
-    marginBottom: theme.spacing.s,
-    padding: theme.spacing.s,
-    borderRadius: theme.borderRadius.small,
-    textAlign: 'center',
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.xs,
+    fontSize: theme.typography.fontSizes.medium,
     backgroundColor: theme.colors.card,
     color: theme.colors.text,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: theme.colors.primary,
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     marginVertical: theme.spacing.s,
-    width: '100%',
+    width: '57.5%',
     alignItems: 'center',
     ...theme.shadows.medium,
   },

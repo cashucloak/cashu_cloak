@@ -154,8 +154,13 @@ async def invoice_state(
     global wallet
     if mint:
         wallet = await mint_wallet(mint)
-    state = await wallet.get_invoice_status(payment_request)
-    return state
+    try:
+        state = await wallet.get_invoice_status(payment_request)
+        return state
+    except Exception as e:
+        # Log the error and return a user-friendly response
+        print(f"Error in get_invoice_status: {e}")
+        return PaymentStatus(status="ERROR", error_message=str(e))
 
 
 @router.get(
