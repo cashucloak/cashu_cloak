@@ -8,14 +8,12 @@ import CustomTabBar from '../components/CustomTabBar';
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
-import GenerateInvoiceScreen from '../screens/GenerateInvoiceScreen';
 import RevealInvoiceScreen from '../screens/RevealInvoiceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import SendCashuScreen from '../screens/SendCashuScreen';
 import DescriptionScreen from '../screens/DescriptionScreen';
 import ProcessScreen from '../screens/ProcessScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
-import CloakScreen from '../screens/CloakScreen';
 
 // Custom theme that extends the navigation dark theme with our colors
 const CashuTheme = {
@@ -45,10 +43,8 @@ const HomeStackScreen = () => (
     }}
   >
     <HomeStack.Screen name="Home" component={HomeScreen} />
-    <HomeStack.Screen name="GenerateInvoice" component={GenerateInvoiceScreen} />
     <HomeStack.Screen name="RevealInvoice" component={RevealInvoiceScreen} />
     <HomeStack.Screen name="SendCashu" component={SendCashuScreen} />
-    <HomeStack.Screen name="Cloak" component={CloakScreen} />
   </HomeStack.Navigator>
 );
 

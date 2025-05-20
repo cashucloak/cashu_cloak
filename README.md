@@ -1,182 +1,156 @@
-# Cashu Cloak
+# Cashu Cloak 🔒
 
-Cashu Cloak is a private fork of the [Cashu Nutshell](https://github.com/cashubtc/nutshell) project that adds steganography capabilities to hide Cashu tokens within images.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React Native](https://img.shields.io/badge/React_Native-0.72.0-blue.svg)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0.0-blue.svg)](https://www.typescriptlang.org)
 
-**Nutshell is a Chaumian Ecash wallet and mint for Bitcoin Lightning based on the Cashu protocol.**
+> A mobile app built with React Native and TypeScript that allows you to hide Cashu Tokens inside images and send/receive Lightning Invoices. Based on [Cashu Nutshell](https://github.com/cashubtc/nutshell) and [Stegano-rs](https://github.com/steganogram/stegano-rs).
 
-<a href="https://pypi.org/project/cashu/"><img alt="Release" src="https://img.shields.io/pypi/v/cashu?color=black"></a> <a href="https://pepy.tech/project/cashu"> <img alt="Downloads" src="https://pepy.tech/badge/cashu"></a>
+## 💭 Inspiration
+We've been fascinated by steganography—the art of hiding messages in plain sight. When we first learned about e-cash and its properties as a bearer asset, it struck us that we could do something similar for digital money: "hide" Bitcoin transactions inside images so that only sender and recipient know where to look—and thwart anyone trying to censor or surveil them. We realized we could build a system where transactions are encrypted **and** concealed. 
 
-*Disclaimer: The author is NOT a cryptographer and this work has not been reviewed. This means that there is very likely a fatal flaw somewhere. Cashu is still experimental and not production-ready.*
+**"Cryptography protects the message; steganography protects the messenger."** 
 
-Cashu is a free and open-source [Ecash protocol](https://github.com/cashubtc/nuts) based on David Wagner's variant of Chaumian blinding called [Blind Diffie-Hellman Key Exchange](https://cypherpunks.venona.com/date/1996/03/msg01848.html) scheme written down [here](https://gist.github.com/RubenSomsen/be7a4760dd4596d06963d67baf140406).
+## 🌟 Core Features
 
-<p align="center">
-<a href="#the-cashu-protocol">Cashu protocol</a> ·
-<a href="#easy-install">Quick Install</a> ·
-<a href="#manual-install-poetry">Manual install</a> ·
-<a href="#configuration">Configuration</a> ·
-<a href="#using-cashu">Using Cashu</a> ·
-<a href="#running-a-mint">Run a mint</a>
-</p>
+- **Steganography**: The art of hiding information within other data. Hide Cashu tokens within any image, making transactions invisible to the untrained eye
+- **Bitcoin Lightning Integration**: Instant, secure payments through the Lightning Network
+- **E-cash Protocols**: Leverage bearer assets for truly private digital transactions
+- **Enhanced Security**: End-to-end encryption with built-in Tor support for secure, private transactions on mobile devices
+- **Mobile-First**: Native Android and iOS (future build) experience built with React Native and TypeScript
+- **Interactive UI**: User-friendly image selection and token management
 
-### Feature overview
 
-- Bitcoin Lightning support (LND, CLN, et al.)
-- Full support for the Cashu protocol [specifications](https://github.com/cashubtc/nuts)
-- Standalone CLI wallet and mint server
-- Wallet and mint library you can include in other Python projects
-- PostgreSQL and SQLite
-- Wallet with builtin Tor
-- Use multiple mints in a single wallet
-- **NEW: Steganography support for hiding tokens in images**
+## 📱 How It Works
 
-### Advanced features
-- Deterministic wallet with seed phrase backup
-- Programmable ecash: P2PK and HTLCs
-- Wallet and mint support for keyset rotations
-- DLEQ proofs for offline transactions
-- Send and receive tokens on nostr
-- **NEW: Interactive image selection for token hiding**
+### Hiding Tokens in Images
 
-## The Cashu protocol
-Different Cashu clients and mints use the same protocol to achieve interoperability. See the [documentation page](https://docs.cashu.space/) for more information on other projects. If you are interested in developing on your own Cashu project, please refer to the protocol specs [protocol specs](https://github.com/cashubtc/nuts).
+1. Select an image from your gallery
+2. Choose the amount to send
+3. The app will automatically hide the token in the image
+4. Share the image with the recipient
 
-## Easy Install: Nutshell wallet
+### Revealing Hidden Tokens
 
-The easiest way to use Cashu is to install the package it via pip:
+1. Open the app
+2. Select the image containing the hidden token
+3. The app will automatically detect and extract the token
+4. Choose to receive the token
+
+## 🤝 Contributing
+Developers are invited to contribute to CashuCloak.
+
+## ⚠️ Disclaimer
+
+> The author is NOT a cryptographer and this work has not been reviewed. This means that there is very likely a fatal flaw somewhere. Cashu is still experimental and not production-ready.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js and npm
+- React Native development environment setup
+- iOS: Xcode and CocoaPods
+- Android: Android Studio and JDK
+- Tor service
+
+### Installation
+
+1. Install Bitcoin Lightning support, wallet, and mint servers from [Cashu Nutshell](https://github.com/cashubtc/nutshell)
+
+2. **Clone the repository**
 ```bash
-pip install cashu
+git clone https://github.com/ridwan102/cashu_cloak.git
+cd cashu_cloak
 ```
 
-To update Cashu, use `pip install cashu -U`.
-
-If you have problems running the command above on Ubuntu, run `sudo apt install -y pip pkg-config` and `pip install wheel`. On macOS, you might have to run `pip install wheel` and `brew install pkg-config`.
-
-You can skip the entire next section about Poetry and jump right to [Using Cashu](#using-cashu).
-
-## Easy Install: Nutshell mint
-
-The easiest way to get a mint running is through Docker.
-
-You can build the image yourself by running the following command. Make sure to adjust the environment variables in `docker-compose.yaml`.
-
+3. **Install dependencies**
 ```bash
-docker compose up mint
+cd mobile
+npm install
 ```
 
-Alternatively, you can use the pre-built Docker images, see [Running a mint](#docker).
-
-## Manual install: Poetry
-These steps help you install Python via pyenv and Poetry. If you already have Poetry running on your computer, you can skip this step and jump right to [Install Cashu](#poetry-install-cashu).
-
-#### Poetry: Prerequisites
-
+4. **iOS Setup**
 ```bash
-# on ubuntu:
-sudo apt install -y build-essential pkg-config libffi-dev libpq-dev zlib1g-dev libssl-dev python3-dev libsqlite3-dev ncurses-dev libbz2-dev libreadline-dev lzma-dev liblzma-dev
-
-# install python using pyenv
-curl https://pyenv.run | bash
-
-# !! follow the instructions of pyenv init to setup pyenv !!
-pyenv init
-
-# restart your shell (or source your .rc file), then install python:
-pyenv install 3.10.4
-
-# install poetry
-curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
-echo export PATH=\"$HOME/.local/bin:$PATH\" >> ~/.bashrc
-source ~/.bashrc
+cd ios
+bundle install
+bundle exec pod install
+cd ..
 ```
 
-#### Poetry: Install Cashu
+5. **Start the development server from Mobile Directory**
 ```bash
-# install cashu
-git clone https://github.com/ridwan102/cashu_cloak.git cashu
-cd cashu
-git checkout <latest_tag>
-pyenv local 3.10.4
-poetry install
+cd mobile
+npm start
 ```
 
-#### Poetry: Update Cashu
-To update Cashu to the newest version enter
+6. **Run the app**
+
+- Open a new terminal, from Mobile directory, use the following command to build and run your Android or iOS app:
 ```bash
-git pull && poetry install
+cd mobile
+
+# For iOS
+npm run ios
+
+# For Android
+npm run android
 ```
 
-#### Poetry: Using the Nutshell wallet
+## ⚙️ Configuration & Future Runs
 
-Cashu should be now installed. To execute the following commands, activate your virtual Poetry environment via
+### Wallet API Setup
 
+Start the wallet API daemon:
 ```bash
-poetry shell
+uvicorn cashu.main:app --host 0.0.0.0 --port 4448
+# or
+cashu -d
 ```
 
-If you don't activate your environment, just prepend `poetry run` to all following commands.
+Access API docs at [http://localhost:4448/docs](http://localhost:4448/docs)
 
-## Configuration
-```bash
-mv .env.example .env
-# edit .env file
-vim .env
-```
-
-To use the wallet with the [public test mint](#test-instance), you need to change the appropriate entries in the `.env` file.
-
-#### Test instance
-*Warning: this instance is just for demonstration purposes and development only. The satoshis are not real.*
-
-Change the appropriate `.env` file settings to
-```bash
-MINT_URL=https://testnut.cashu.space
-```
-
-# Using Cashu
-```bash
-cashu info
-```
-This command shows information about your wallet.
-
-#### Check balance
-```bash
-cashu balance
-```
-
-#### Generate a Lightning invoice
-
-This command will return a Lightning invoice that you need to pay to mint new ecash tokens.
+### Tor Setup
 
 ```bash
-cashu invoice 420
+# Start Tor
+brew services start tor
+
+# Stop Tor
+brew services stop tor
 ```
 
-The client will check every few seconds if the invoice has been paid. If you abort this step but still pay the invoice, you can use the command `cashu invoice <amount> --id <id>`.
+### Running the Android App
 
-#### Pay a Lightning invoice
+After initial setup, you can start the Android app anytime with:
+
 ```bash
-cashu pay lnbc120n1p3jfmdapp5r9jz...
+cd mobile
+npx react-native run-android
 ```
 
-#### Send tokens
-To send tokens to another user, enter
-```bash
-cashu send 69
+> **Note**: Make sure you have an Android emulator running or a physical device connected before running this command.
+
+## 🛠️ Development
+
+### Project Structure
 ```
-You should see the encoded token. Copy the token and send it to another user such as via email or a messenger. The token looks like this:
-```bash
-cashuAeyJwcm9vZnMiOiBbey...
+cashu_cloak/
+├── mobile/           # React Native app
+│   ├── src/         # Source code
+│   ├── ios/         # iOS specific files
+│   └── android/     # Android specific files
+└── server/          # Backend services
 ```
 
-#### Receive tokens
-To receive tokens, another user enters:
+### Running Tests
 ```bash
-cashu receive cashuAeyJwcm9vZnMiOiBbey...
+cd mobile
+npm test
 ```
+## Hiding tokens in images using CLI Command 
+You can CLI Commands to hide Cashu tokens within images using Steganography. 
 
-# Hide tokens in images (Steganography)
-You can hide Cashu tokens within images using steganography. This allows you to share tokens in a more subtle way.
+Ensure you have installed [Cashu Nutshell](https://github.com/cashubtc/nutshell) before doing so. 
 
 When sending tokens, you'll be prompted to hide the token in an image:
 ```bash
@@ -207,59 +181,24 @@ Balance: 10 sat
 
 Note: The image must be large enough to hold the token data. The command will warn you if the image is too small.
 
-# Starting the wallet API daemon
-Nutshell wallet can be used in daemon mode that can be controlled through a REST API:
-```bash
-cashu -d
-```
+### Troubleshooting
 
-You can find the API docs at [http://localhost:4448/docs](http://localhost:4448/docs).
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
 
-# Running a mint
-This command runs the mint on your local computer. Skip this step if you want to use the [public test mint](#test-instance) instead.
-
-## Docker
-```
-docker run -d -p 3338:3338 --name nutshell -e MINT_BACKEND_BOLT11_SAT=FakeWallet -e MINT_LISTEN_HOST=0.0.0.0 -e MINT_LISTEN_PORT=3338 -e MINT_PRIVATE_KEY=TEST_PRIVATE_KEY cashubtc/nutshell:0.16.5 poetry run mint
-```
-
-
-## From this repository
-Before you can run your own mint, make sure to enable a Lightning backend in `MINT_BACKEND_BOLT11_SAT` and set `MINT_PRIVATE_KEY` in your `.env` file.
-```bash
-poetry run mint
-```
-
-For testing, you can use Nutshell without a Lightning backend by setting `MINT_BACKEND_BOLT11_SAT=FakeWallet` in the `.env` file.
-
-# Running tests
-To run the tests in this repository, first install the dev dependencies with
-```bash
-poetry install --with dev
-```
-
-Then, make sure to set up your mint's `.env` file to use a fake Lightning backend and disable Tor:
-```bash
-MINT_BACKEND_BOLT11_SAT=FakeWallet
-TOR=FALSE
-```
-You can run the tests with
-```bash
-poetry run pytest tests
-```
-
-# Contributing
-
-Developers are invited to contribute to Nutshell. Please see the [contribution guide](CONTRIBUTING.md).
-
-## Original Project
-This project is based on [Cashu Nutshell](https://github.com/cashubtc/nutshell) by the Cashu team.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - [Cashu Nutshell](https://github.com/cashubtc/nutshell) - The original project
-- [Stegano-rs](https://github.com/steganogram/stegano-rs) - Inspiration for steganography implementation
+- [Stegano-rs](https://github.com/steganogram/stegano-rs) - Steganography implementation
+- [React Native](https://reactnative.dev) - Mobile framework
+- [Awesome Cashu](https://github.com/cashubtc/awesome-cashu) - Resources and references
+
+
+## 🔗 Other Researched References
+
+- [React Native Documentation](https://reactnative.dev/docs/getting-started)
+- [Cashu Protocol](https://github.com/cashubtc/nuts)
+- [Minibits Wallet](https://github.com/minibits-cash/minibits_wallet)
+- [Wrapnuts](https://github.com/wrapnuts/wrapnuts/tree/main)
+- [Uniffi Bindgen React Native](https://github.com/jhugman/uniffi-bindgen-react-native)
+
+

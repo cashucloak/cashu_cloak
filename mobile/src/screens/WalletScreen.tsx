@@ -8,11 +8,16 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
+  Image,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalance, receiveCashuToken, payLightningInvoice, checkInvoiceStatus } from '../services/api';
+import { getBalance, receiveCashuToken, payLightningInvoice, checkInvoiceStatus, createLightningInvoice } from '../services/api';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { useSteganography } from '../hooks/useSteganography';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const TARGET_MINT = 'https://8333.space:3338';
 
@@ -31,6 +36,7 @@ type Mint = {
 
 const WalletScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const { loading: steganographyLoading, hideToken } = useSteganography();
 
   // Active tab
   const [activeTab, setActiveTab] = useState<Tab>('send');
@@ -38,10 +44,13 @@ const WalletScreen: React.FC = () => {
   const [selectedMint, setSelectedMint] = useState<string>(TARGET_MINT);
 
   // Receive state
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
   const [receiveToken, setReceiveToken] = useState('');
-  const [receiveResult, setReceiveResult] = useState<string | null>(null);
   const [receiveLoading, setReceiveLoading] = useState(false);
   const [receiveError, setReceiveError] = useState<string | null>(null);
+  const [receiveResult, setReceiveResult] = useState<string | null>(null);
+  const [generatedInvoice, setGeneratedInvoice] = useState<string>('');
 
   // Pay state
   const [payInvoice, setPayInvoice] = useState('');
@@ -69,6 +78,67 @@ const WalletScreen: React.FC = () => {
       if (mintList.length > 0) {
         setSelectedMint(mintList[0].url);
       }
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!amount) return;
+    try {
+      const data = await createLightningInvoice(Number(amount), selectedMint);
+      const invoice = data.payment_request || data.invoice || JSON.stringify(data);
+      setGeneratedInvoice(invoice);
+
+      // 1. Get the initial balance before polling
+      const balanceData = await getBalance();
+      const initialBalance = balanceData.mints && balanceData.mints[selectedMint]
+        ? balanceData.mints[selectedMint].available
+        : 0;
+
+      setModalVisible(true);
+
+      // 2. Start polling for invoice status and balance
+      let pollCount = 0;
+      const maxPolls = 60; // 5 minutes if polling every 5 seconds
+
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+          // Check invoice status as before
+          const status = await checkInvoiceStatus(invoice, selectedMint);
+
+          // Check current balance
+          const balanceData = await getBalance();
+          const newBalance = balanceData.mints && balanceData.mints[selectedMint]
+            ? balanceData.mints[selectedMint].available
+            : 0;
+
+          // If invoice is settled or balance increased, stop polling and show success
+          if ((status && status.result === 'SETTLED') || newBalance > initialBalance) {
+            clearInterval(pollInterval);
+            setModalVisible(false);
+            Alert.alert('Success!', 'Payment received and tokens claimed', [
+              { text: 'OK' }
+            ]);
+            return;
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          setModalVisible(false);
+          Alert.alert(
+            'Error',
+            'There was a problem checking the invoice status. Please check your balance manually.'
+          );
+          return;
+        }
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          setModalVisible(false);
+          Alert.alert('Timeout', 'Invoice polling timed out. Please check your balance manually.');
+        }
+      }, 5000);
+
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to generate invoice');
     }
   };
 
@@ -131,8 +201,8 @@ const WalletScreen: React.FC = () => {
           if ((status && status.result === 'SETTLED') || newBalance > initialBalance) {
             clearInterval(pollInterval);
             setModalVisible(false);
-            Alert.alert('Success!', 'Payment received and tokens claimed successfully!', [
-              { text: 'OK', onPress: () => navigation.navigate('Home') }
+            Alert.alert('Success!', 'Payment received and tokens claimed', [
+              { text: 'OK' }
             ]);
             return;
           }
@@ -159,25 +229,25 @@ const WalletScreen: React.FC = () => {
   };
 
   const renderReceive = () => (
-    <View style={styles.tabContent}>      
-      <TextInput
-        style={[styles.input, styles.invoiceInput]}
-        placeholder="Paste BTC Cashu Token"
-        placeholderTextColor={theme.colors.placeholder}
-        multiline
-        value={receiveToken}
-        onChangeText={setReceiveToken}
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleReceive}
-        disabled={receiveLoading || !receiveToken}
-      >
-        <Text style={styles.buttonText}>Receive BTC</Text>
-      </TouchableOpacity>
-      {receiveLoading && <ActivityIndicator size="large" color="#007AFF" />}
-      {receiveError && <Text style={styles.error}>{receiveError}</Text>}
-      {receiveResult && <Text style={styles.invoice}>{receiveResult}</Text>}
+    <View style={styles.tabContent}>
+      <>
+        <TextInput
+          style={styles.input}
+          placeholder="BTC (sats) to Receive"
+          placeholderTextColor={theme.colors.placeholder}
+          keyboardType="numeric"
+          value={amount}
+          onChangeText={setAmount}
+        />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleGenerateInvoice}
+          disabled={loading || !amount}
+        >
+          <Text style={styles.buttonText}>Receive BTC</Text>
+        </TouchableOpacity>
+        {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+      </>
     </View>
   );
 
@@ -229,6 +299,25 @@ const WalletScreen: React.FC = () => {
         {activeTab === 'receive' && renderReceive()}
         {activeTab === 'send' && renderPayInvoice()}
       </ScrollView>
+
+      <Modal visible={modalVisible} transparent>
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Lightning Invoice Generated!</Text>
+            <View style={styles.invoiceBox}>
+              <Text selectable style={styles.invoiceText}>{generatedInvoice}</Text>
+            </View>
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity onPress={() => Clipboard.setString(generatedInvoice || '')}>
+                <Text style={styles.flatButtonText}>Copy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.flatButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -360,7 +449,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.m,
     color: theme.colors.text,
-  }
+  },
+  modal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.large,
+    alignItems: 'center',
+    minWidth: 300,
+    ...theme.shadows.large,
+  },
+  modalTitle: {
+    fontSize: theme.typography.fontSizes.xlarge,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.m,
+    color: theme.colors.text,
+  },
+  modalMessage: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.m,
+    textAlign: 'center',
+  },
+  invoiceBox: {
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.small,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  invoiceText: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  flatButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginHorizontal: theme.spacing.m,
+  },
 });
 
 export default WalletScreen; 
