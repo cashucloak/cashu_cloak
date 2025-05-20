@@ -4,7 +4,15 @@
 [![React Native](https://img.shields.io/badge/React_Native-0.72.0-blue.svg)](https://reactnative.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0.0-blue.svg)](https://www.typescriptlang.org)
 
-> A mobile app built with React Native and TypeScript that allows you to hide Cashu Tokens inside images and send/receive Lightning Invoices. Based on [Cashu Nutshell](https://github.com/cashubtc/nutshell) and [Stegano-rs](https://github.com/steganogram/stegano-rs).
+A mobile app built with React Native and TypeScript that allows you to hide Cashu Tokens inside images and send/receive Lightning Invoices. Based on [Cashu Nutshell](https://github.com/cashubtc/nutshell) and [Stegano-rs](https://github.com/steganogram/stegano-rs). See [YouTube video](https://www.youtube.com/watch?v=341GjWFwyPg&t=7s) for demonstration.
+
+<div align="center">
+  <img src="mobile/src/assets/images/cashucloak2.png" alt="Cashu Cloak App Screenshot" width="300"/>
+  <br/>
+  <em>Cashu Cloak - Hide your tokens in plain sight</em>
+</div>
+
+
 
 ## 💭 Inspiration
 We've been fascinated by steganography—the art of hiding messages in plain sight. When we first learned about e-cash and its properties as a bearer asset, it struck us that we could do something similar for digital money: "hide" Bitcoin transactions inside images so that only sender and recipient know where to look—and thwart anyone trying to censor or surveil them. We realized we could build a system where transactions are encrypted **and** concealed. 
