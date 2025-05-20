@@ -1,115 +1,153 @@
-# Cashu Cloak
+# Cashu Cloak 🔒
 
-Cashu Cloak is a mobile app built with React Native and TypeScript allowing you to hide Cashu Tokens inside images and send and receive Lightning Invoices. It is based off of [Cashu Nutshell](https://github.com/cashubtc/nutshell) and [Stegano-rs](https://github.com/steganogram/stegano-rs) that adds steganography capabilities to hide Cashu tokens within images.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React Native](https://img.shields.io/badge/React_Native-0.72.0-blue.svg)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0.0-blue.svg)](https://www.typescriptlang.org)
 
-Nutshell is a Chaumian Ecash wallet and mint for Bitcoin Lightning based on the Cashu protocol.
+> A mobile app built with React Native and TypeScript that allows you to hide Cashu Tokens inside images and send/receive Lightning Invoices. Based on [Cashu Nutshell](https://github.com/cashubtc/nutshell) and [Stegano-rs](https://github.com/steganogram/stegano-rs).
 
-Cashu is a free and open-source [Ecash protocol](https://github.com/cashubtc/nuts) based on David Wagner's variant of Chaumian blinding called [Blind Diffie-Hellman Key Exchange](https://cypherpunks.venona.com/date/1996/03/msg01848.html) scheme written down [here](https://gist.github.com/RubenSomsen/be7a4760dd4596d06963d67baf140406).
+## 💭 Inspiration
+We've been fascinated by steganography—the art of hiding messages in plain sight. When we first learned about e-cash and its properties as a bearer asset, it struck us that we could do something similar for digital money: "hide" Bitcoin transactions inside images so that only sender and recipient know where to look—and thwart anyone trying to censor or surveil them. We realized we could build a system where transactions are encrypted **and** concealed. 
 
-**Disclaimer: The author is NOT a cryptographer and this work has not been reviewed. This means that there is very likely a fatal flaw somewhere. Cashu is still experimental and not production-ready.**
+**"Cryptography protects the message; steganography protects the messenger."** 
 
-# Contributing
+## 🌟 Core Features
+
+- **Steganography**: The art of hiding information within other data. Hide Cashu tokens within any image, making transactions invisible to the untrained eye
+- **Bitcoin Lightning Integration**: Instant, secure payments through the Lightning Network
+- **E-cash Protocols**: Leverage bearer assets for truly private digital transactions
+- **Enhanced Security**: End-to-end encryption with built-in Tor support for secure, private transactions on mobile devices
+- **Mobile-First**: Native Android and iOS (future build) experience built with React Native and TypeScript
+- **Interactive UI**: User-friendly image selection and token management
+
+
+## 📱 How It Works
+
+### Hiding Tokens in Images
+
+1. Select an image from your gallery
+2. Choose the amount to send
+3. The app will automatically hide the token in the image
+4. Share the image with the recipient
+
+### Revealing Hidden Tokens
+
+1. Open the app
+2. Select the image containing the hidden token
+3. The app will automatically detect and extract the token
+4. Choose to receive the token
+
+## 🤝 Contributing
 Developers are invited to contribute to CashuCloak.
 
-# Getting Started
+## ⚠️ Disclaimer
 
-## Step 1: Install Wallet Dependencies
-Install Bitcoin Lightning support, wallet, and mint servers from [Cashu Nutshell](https://github.com/cashubtc/nutshell)
+> The author is NOT a cryptographer and this work has not been reviewed. This means that there is very likely a fatal flaw somewhere. Cashu is still experimental and not production-ready.
 
-## Step 2: Start Wallet API Daemon
-From Root Directory run
-``` 
-uvicorn cashu.main:app --host 0.0.0.0 --port 4448 
+## 🚀 Quick Start
 
-#or
-cashu -d
-```
-**If having issues, disconnect VPN**
+### Prerequisites
+- Node.js and npm
+- React Native development environment setup
+- iOS: Xcode and CocoaPods
+- Android: Android Studio and JDK
+- Tor service
 
-You can find the API docs at [http://localhost:4448/docs](http://localhost:4448/docs).
+### Installation
 
-## Step 2: Start Tor
-``` 
-brew services start tor 
+1. Install Bitcoin Lightning support, wallet, and mint servers from [Cashu Nutshell](https://github.com/cashubtc/nutshell)
 
-#to stop TOR
-brew services stop tor 
+2. **Clone the repository**
+```bash
+git clone https://github.com/ridwan102/cashu_cloak.git
+cd cashu_cloak
 ```
 
-## Step 3: Start Metro from Mobile Directory
-
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
-
-```sh
+3. **Install dependencies**
+```bash
 cd mobile
-# Using npm
+npm install
+```
+
+4. **iOS Setup**
+```bash
+cd ios
+bundle install
+bundle exec pod install
+cd ..
+```
+
+5. **Start the development server from Mobile Directory**
+```bash
+cd mobile
 npm start
 ```
 
-## Step 4: Build and Run Your App from Mobile Directory
+6. **Run the app**
 
-Open a new terminal window/pane from the React Native project (Mobile directory), and use the following command to build and run your Android or iOS app:
-
-### Android
-
-```sh
+- Open a new terminal, from Mobile directory, use the following command to build and run your Android or iOS app:
+```bash
 cd mobile
-# Using npm
+
+# For iOS
+npm run ios
+
+# For Android
 npm run android
 ```
 
-### iOS
+## ⚙️ Configuration & Future Runs
 
-For iOS, install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+### Wallet API Setup
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-cd mobile
-# Using npm
-npm run ios
+Start the wallet API daemon:
+```bash
+uvicorn cashu.main:app --host 0.0.0.0 --port 4448
+# or
+cashu -d
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Access API docs at [http://localhost:4448/docs](http://localhost:4448/docs)
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Tor Setup
 
-```sh
-bundle install
+```bash
+# Start Tor
+brew services start tor
+
+# Stop Tor
+brew services stop tor
 ```
 
-Then, and every time you update your native dependencies, run:
+### Running the Android App
 
-```sh
-bundle exec pod install
-```
+After initial setup, you can start the Android app anytime with:
 
-## Step 5: Starting App in the Future on Android from Mobile Directory
-```
+```bash
 cd mobile
 npx react-native run-android
 ```
 
-### References
+> **Note**: Make sure you have an Android emulator running or a physical device connected before running this command.
 
-- For adding this new React Native code to an existing application: [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- Learn more about React Native see [docs](https://reactnative.dev/docs/getting-started).
+## 🛠️ Development
 
-### Troubleshooting
+### Project Structure
+```
+cashu_cloak/
+├── mobile/           # React Native app
+│   ├── src/         # Source code
+│   ├── ios/         # iOS specific files
+│   └── android/     # Android specific files
+└── server/          # Backend services
+```
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-### Learn More about React Native
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-
-# Hiding tokens in images using CLI Command 
+### Running Tests
+```bash
+cd mobile
+npm test
+```
+## Hiding tokens in images using CLI Command 
 You can CLI Commands to hide Cashu tokens within images using Steganography. 
 
 Ensure you have installed [Cashu Nutshell](https://github.com/cashubtc/nutshell) before doing so. 
@@ -143,11 +181,24 @@ Balance: 10 sat
 
 Note: The image must be large enough to hold the token data. The command will warn you if the image is too small.
 
-## Other Researched References
-- [Awesome Cashu](https://github.com/cashubtc/awesome-cashu)
+### Troubleshooting
+
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+
+## 🙏 Acknowledgments
+
+- [Cashu Nutshell](https://github.com/cashubtc/nutshell) - The original project
+- [Stegano-rs](https://github.com/steganogram/stegano-rs) - Steganography implementation
+- [React Native](https://reactnative.dev) - Mobile framework
+- [Awesome Cashu](https://github.com/cashubtc/awesome-cashu) - Resources and references
+
+
+## 🔗 Other Researched References
+
+- [React Native Documentation](https://reactnative.dev/docs/getting-started)
+- [Cashu Protocol](https://github.com/cashubtc/nuts)
 - [Minibits Wallet](https://github.com/minibits-cash/minibits_wallet)
 - [Wrapnuts](https://github.com/wrapnuts/wrapnuts/tree/main)
 - [Uniffi Bindgen React Native](https://github.com/jhugman/uniffi-bindgen-react-native)
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
