@@ -106,6 +106,17 @@ npm run android
 
 ## ⚙️ Configuration & Future Runs
 
+
+### Deactivate VPN - could cause issues
+
+### Check if IP Address has changed 
+
+### Activate Virtual Environment
+
+``` 
+source /Users/ridwan/Documents/cashu_venv/bin/activate
+```
+
 ### Wallet API Setup
 
 Start the wallet API daemon:
