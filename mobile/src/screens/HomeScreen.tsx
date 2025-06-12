@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { theme } from '../theme';
 
 // Import the welcome image
@@ -10,15 +9,8 @@ const welcomeImage = require('../assets/images/cashucloak2.png');
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
 
-  const handleSendCashu = async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: false });
-    if (result.assets && result.assets.length > 0) {
-      navigation.navigate('SendCashu', {
-        imageUri: result.assets[0].uri,
-        imageType: result.assets[0].type,
-        imageName: result.assets[0].fileName,
-      });
-    }
+  const handleSendCashu = () => {
+    navigation.navigate('CloakingOptions');
   };
 
   return (
@@ -28,10 +20,10 @@ const HomeScreen = () => {
       <Text style={styles.subtitle}>Your secure BTC mobile wallet</Text>
 
       <TouchableOpacity style={styles.button} onPress={handleSendCashu}>
-        <Text style={styles.buttonText}>Cloak Image</Text>
+        <Text style={styles.buttonText}>Cloak</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('RevealInvoice')}>
-        <Text style={styles.buttonText}>Uncloak Image</Text>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('UncloakOptionsScreen')}>
+        <Text style={styles.buttonText}>Uncloak</Text>
       </TouchableOpacity>
     </View>
   );
