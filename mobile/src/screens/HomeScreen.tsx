@@ -22,7 +22,7 @@ const HomeScreen = () => {
       <TouchableOpacity style={styles.button} onPress={handleSendCashu}>
         <Text style={styles.buttonText}>Cloak</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('RevealInvoice')}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('UncloakOptionsScreen')}>
         <Text style={styles.buttonText}>Uncloak</Text>
       </TouchableOpacity>
     </View>

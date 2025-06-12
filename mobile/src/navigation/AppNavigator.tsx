@@ -16,6 +16,7 @@ import ProcessScreen from '../screens/ProcessScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import CloakingOptionsScreen from '../screens/CloakingOptionsScreen';
 import QRCodeScreen from '../screens/QRCodeScreen';
+import UncloakOptionsScreen from '../screens/UncloakOptionsScreen';
 
 // Custom theme that extends the navigation dark theme with our colors
 const CashuTheme = {
@@ -45,10 +46,11 @@ const HomeStackScreen = () => (
     }}
   >
     <HomeStack.Screen name="Home" component={HomeScreen} />
-    <HomeStack.Screen name="RevealInvoice" component={RevealInvoiceScreen} />
+    <HomeStack.Screen name="RevealInvoiceScreen" component={RevealInvoiceScreen} />
     <HomeStack.Screen name="SendCashu" component={SendCashuScreen} />
     <HomeStack.Screen name="CloakingOptions" component={CloakingOptionsScreen} />
     <HomeStack.Screen name="QRCode" component={QRCodeScreen} />
+    <HomeStack.Screen name="UncloakOptionsScreen" component={UncloakOptionsScreen} options={{ title: 'Uncloak Options' }} />
   </HomeStack.Navigator>
 );
 

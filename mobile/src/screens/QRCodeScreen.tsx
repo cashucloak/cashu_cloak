@@ -1,42 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { sendCashu } from '../services/api';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { theme } from '../theme';
 import QRCode from 'react-native-qrcode-svg';
+import { sendCashu } from '../services/api';
+import ViewShot from 'react-native-view-shot';
+import CameraRoll from '@react-native-camera-roll/camera-roll';
 
 const QRCodeScreen = () => {
-  const navigation = useNavigation<any>();
   const [sendAmount, setSendAmount] = useState('');
-  const [sendToken, setSendToken] = useState<string | null>(null);
-  const [sendLoading, setSendLoading] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [qrValue, setQrValue] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const viewShotRef = useRef<any>(null);
 
-  const handleGenerate = async () => {
-    if (!sendAmount) return;
-    setSendLoading(true);
-    setSendError(null);
-    setSendToken(null);
-
+  const handleCloak = async () => {
+    setLoading(true);
+    setError(null);
+    setQrValue(null);
     try {
-      const data = await sendCashu(parseInt(sendAmount), '');
-      const token = data.token;
-      setSendToken(token);
-      setModalVisible(true);
+      const data = await sendCashu(Number(sendAmount), '');
+      const token = data.token || JSON.stringify(data);
+      setQrValue(token);
     } catch (err: any) {
-      setSendError(err.message || 'Failed to generate token');
+      setError(err.message || 'Failed to cloak BTC');
     } finally {
-      setSendLoading(false);
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const saveQrToGallery = async () => {
+      if (qrValue && viewShotRef.current) {
+        try {
+          const uri = await viewShotRef.current.capture();
+          await CameraRoll.save(uri, { type: 'photo' });
+          Alert.alert('Saved', 'QR code saved to gallery!');
+        } catch (e) {
+          Alert.alert('Error', 'Failed to save QR code to gallery.');
+        }
+      }
+    };
+    if (qrValue) {
+      saveQrToGallery();
+    }
+  }, [qrValue]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Generate QR Code</Text>
-      <Text style={styles.subtitle}>Enter the amount of Bitcoin to cloak</Text>
-
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -49,38 +59,18 @@ const QRCodeScreen = () => {
       </View>
       <TouchableOpacity
         style={styles.button}
-        onPress={handleGenerate}
-        disabled={sendLoading || !sendAmount}
+        onPress={handleCloak}
+        disabled={loading || !sendAmount}
       >
-        <Text style={styles.buttonText}>Generate QR Code</Text>
+        <Text style={styles.buttonText}>Cloak</Text>
       </TouchableOpacity>
-      {sendLoading && <ActivityIndicator size="large" color={theme.colors.primary} />}
-      {sendError && <Text style={styles.error}>{sendError}</Text>}
-
-      <Modal visible={modalVisible} transparent>
-        <View style={styles.modal}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Cashu Token Generated!</Text>
-            <Text style={styles.modalMessage}>Scan QR Code</Text>
-            <View style={styles.qrContainer}>
-              <QRCode
-                value={sendToken || ''}
-                size={200}
-                backgroundColor={theme.colors.background}
-                color={theme.colors.text}
-              />
-            </View>
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity onPress={() => Clipboard.setString(sendToken || '')}>
-                <Text style={styles.flatButtonText}>Copy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setModalVisible(false); navigation.navigate('Home'); }}>
-                <Text style={styles.flatButtonText}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
+      {error && <Text style={styles.error}>{error}</Text>}
+      {qrValue && (
+        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.qrContainer}>
+          <QRCode value={qrValue} size={200} />
+        </ViewShot>
+      )}
     </View>
   );
 };
@@ -88,23 +78,9 @@ const QRCodeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: theme.colors.background,
-    padding: theme.spacing.m,
-  },
-  title: {
-    fontSize: theme.typography.fontSizes.xlarge,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.s,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: theme.typography.fontSizes.medium,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xl,
-    textAlign: 'center',
   },
   inputContainer: {
     width: '100%',
@@ -124,8 +100,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
-    width: '57.5%',
     alignItems: 'center',
+    width: '57.5%',
   },
   buttonText: {
     color: theme.colors.buttonText,
@@ -137,48 +113,14 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.m,
     textAlign: 'center',
   },
-  modal: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  modalContent: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.l,
-    borderRadius: theme.borderRadius.large,
-    alignItems: 'center',
-    minWidth: 300,
-  },
-  modalTitle: {
-    fontSize: theme.typography.fontSizes.xlarge,
-    fontWeight: 'bold',
-    marginBottom: theme.spacing.m,
-    color: theme.colors.text,
-  },
-  modalMessage: {
-    fontSize: theme.typography.fontSizes.medium,
-    marginBottom: theme.spacing.m,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
   qrContainer: {
+    marginTop: theme.spacing.xl,
     padding: theme.spacing.m,
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.medium,
-    marginBottom: theme.spacing.m,
-  },
-  modalButtonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  flatButtonText: {
-    color: theme.colors.primary,
-    fontSize: theme.typography.fontSizes.medium,
-    fontWeight: 'bold',
-    padding: theme.spacing.m,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
-export default QRCodeScreen; 
+export default QRCodeScreen;

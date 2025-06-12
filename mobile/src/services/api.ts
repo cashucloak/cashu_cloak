@@ -111,6 +111,7 @@ export const sendCashu = async (amount: number, recipient: string, mint?: string
   if (recipient) params.nostr = recipient;
   if (mint) params.mint = mint;
   const response = await api.post('/send', null, { params });
+  console.log('API Response:', response.data);
   return response.data;
 };
 
