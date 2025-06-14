@@ -17,7 +17,7 @@ const UncloakOptionsScreen = () => {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => {}}
+        onPress={() => navigation.navigate('QRScanner')}
       >
         <Text style={styles.buttonText}>Uncloak QR Code</Text>
       </TouchableOpacity>
