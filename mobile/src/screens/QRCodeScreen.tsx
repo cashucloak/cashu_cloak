@@ -4,7 +4,7 @@ import { theme } from '../theme';
 import QRCode from 'react-native-qrcode-svg';
 import { sendCashu } from '../services/api';
 import ViewShot from 'react-native-view-shot';
-import CameraRoll from '@react-native-camera-roll/camera-roll';
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 
 const QRCodeScreen = () => {
   const [sendAmount, setSendAmount] = useState('');
@@ -33,7 +33,7 @@ const QRCodeScreen = () => {
       if (qrValue && viewShotRef.current) {
         try {
           const uri = await viewShotRef.current.capture();
-          await CameraRoll.save(uri, { type: 'photo' });
+          await CameraRoll.saveAsset(uri);
           Alert.alert('Saved', 'QR code saved to gallery!');
         } catch (e) {
           Alert.alert('Error', 'Failed to save QR code to gallery.');
