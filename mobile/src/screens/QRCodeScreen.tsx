@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform, PermissionsAndroid } from 'react-native';
 import { theme } from '../theme';
 import QRCode from 'react-native-qrcode-svg';
 import { sendCashu } from '../services/api';
@@ -42,12 +42,34 @@ const QRCodeScreen = () => {
     }
   };
 
+  const requestAndroidPermission = async () => {
+    if (Platform.OS === 'android' && Platform.Version < 33) {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Storage Permission Required',
+          message: 'App needs access to your storage to save QR codes',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  };
+
   useEffect(() => {
     const saveQrToGallery = async () => {
       if (qrValue && viewShotRef.current) {
         try {
+          const hasPermission = await requestAndroidPermission();
+          if (!hasPermission) {
+            Alert.alert('Permission Denied', 'Cannot save QR code without storage permission.');
+            return;
+          }
           const uri = await viewShotRef.current.capture();
-          await CameraRoll.saveAsset(uri);
+          await CameraRoll.save(uri, { type: 'photo' });
           Alert.alert('Saved', 'QR code saved to gallery!');
         } catch (e) {
           Alert.alert('Error', 'Failed to save QR code to gallery.');
