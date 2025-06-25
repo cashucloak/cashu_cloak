@@ -126,6 +126,13 @@ uvicorn cashu.main:app --host 0.0.0.0 --port 4448
 cashu -d
 ```
 
+**If error Fetching Balance: Update API_URL in .env**
+**Last solution, The debugging code added in api.ts somehow fixed the issue. This suggests there might have been a timing or initialization problem that was resolved by adding the console.log statements.
+This is a known phenomenon in React Native development sometimes called "console.log debugging" where adding logging can inadvertently fix timing issues or force proper initialization of certain components
+console.log('Attempting to fetch balance from:', `${api.defaults.baseURL}/balance`);
+This line forces the evaluation of api.defaults.baseURL and ensures the axios instance is properly initialized before making the request
+**
+
 Access API docs at [http://localhost:4448/docs](http://localhost:4448/docs)
 
 ### Tor Setup

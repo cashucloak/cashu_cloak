@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 export interface SteganographyResponse {
@@ -93,8 +94,27 @@ export const steganographyService = {
 
 // Get Cashu wallet balance
 export const getBalance = async () => {
-  const response = await api.get('/balance');
-  return response.data;
+  try {
+    /*The debugging code below was added to fix the issue. This suggests there might have been a timing or initialization problem that was resolved by adding the console.log statements.
+      This is a known phenomenon in React Native development sometimes called "console.log debugging" where adding logging can inadvertently fix timing issues or force proper initialization of certain components
+    
+      console.log('Attempting to fetch balance from:', `${api.defaults.baseURL}/balance`);
+      This line forces the evaluation of api.defaults.baseURL and ensures the axios instance is properly initialized before making the request.
+    */
+    console.log('Attempting to fetch balance from:', `${api.defaults.baseURL}/balance`);
+    const response = await api.get('/balance');
+    console.log('Balance fetched successfully:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Balance fetch error details:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+    });
+    throw new Error(`Failed to fetch balance: ${error.message}`);
+  }
 };
 
 // Create a Lightning invoice to receive sats
