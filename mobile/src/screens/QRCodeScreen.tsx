@@ -12,6 +12,15 @@ const QRCodeScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const viewShotRef = useRef<any>(null);
+  const inputRef = useRef<TextInput>(null);
+
+  // Focus the input when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCloak = async () => {
     setLoading(true);
@@ -19,9 +28,14 @@ const QRCodeScreen = () => {
     setQrValue(null);
     try {
       const data = await sendCashu(Number(sendAmount), '');
+      console.log('Cashu API response:', data);
       const token = data.token || JSON.stringify(data);
+      console.log('Token being set as QR value:', token);
+      console.log('Token type:', typeof token);
+      console.log('Token length:', token.length);
       setQrValue(token);
     } catch (err: any) {
+      console.error('Error in handleCloak:', err);
       setError(err.message || 'Failed to cloak BTC');
     } finally {
       setLoading(false);
@@ -49,6 +63,7 @@ const QRCodeScreen = () => {
     <View style={styles.container}>
       <View style={styles.inputContainer}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           placeholder="Bitcoin (sats) to Send"
           placeholderTextColor={theme.colors.placeholder}
@@ -68,7 +83,12 @@ const QRCodeScreen = () => {
       {error && <Text style={styles.error}>{error}</Text>}
       {qrValue && (
         <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.qrContainer}>
-          <QRCode value={qrValue} size={200} />
+          <QRCode 
+            value={qrValue} 
+            size={300}
+            color="black"
+            backgroundColor="white"
+          />
         </ViewShot>
       )}
     </View>
@@ -120,6 +140,17 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.medium,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  qrLabel: {
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
+    marginTop: theme.spacing.m,
+  },
+  qrInfo: {
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.medium,
+    marginTop: theme.spacing.s,
   },
 });
 

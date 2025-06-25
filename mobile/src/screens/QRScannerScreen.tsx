@@ -48,6 +48,10 @@ const QRScannerScreen = () => {
     if (scanning && event?.nativeEvent?.codeStringValue) {
       setScanning(false);
       const data = event.nativeEvent.codeStringValue;
+      console.log('QR Code scanned data:', data);
+      console.log('Scanned data type:', typeof data);
+      console.log('Scanned data length:', data.length);
+      console.log('Scanned data starts with:', data.substring(0, 20));
       setScannedData(data);
       setShowModal(true);
     }
