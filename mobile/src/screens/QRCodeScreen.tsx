@@ -82,14 +82,14 @@ const QRCodeScreen = () => {
       {loading && <ActivityIndicator size="large" color={theme.colors.primary} />}
       {error && <Text style={styles.error}>{error}</Text>}
       {qrValue && (
-        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }} style={styles.qrContainer}>
-          <QRCode 
-            value={qrValue} 
-            size={300}
+        <View style={{ backgroundColor: 'white', padding: 24, borderRadius: 16 }}>
+          <QRCode
+            value={qrValue}
+            size={350}
             color="black"
             backgroundColor="white"
           />
-        </ViewShot>
+        </View>
       )}
     </View>
   );
