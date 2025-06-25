@@ -123,10 +123,12 @@ const QRScannerScreen = () => {
         onReadCode={onReadCode}
         onError={onError}
         showFrame
-        laserColor={theme.colors.primary}
-        frameColor={theme.colors.primary}
+        laserColor="white"
+        frameColor="white"
+        barcodeFrameSize={{ width: 250, height: 250 }}
         style={styles.camera}
       />
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.button}
