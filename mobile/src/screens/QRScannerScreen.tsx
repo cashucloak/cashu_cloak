@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
 import { Camera } from 'react-native-camera-kit';
 import { useNavigation } from '@react-navigation/native';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { theme } from '../theme';
+import { receiveCashuToken, getBalance } from '../services/api';
 
 const QRScannerScreen = () => {
   const navigation = useNavigation<any>();
@@ -11,6 +12,9 @@ const QRScannerScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemResult, setRedeemResult] = useState<string | null>(null);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
 
   useEffect(() => {
     checkCameraPermission();
@@ -49,23 +53,33 @@ const QRScannerScreen = () => {
     }
   };
 
-  const handleProceed = () => {
-    if (scannedData) {
-      try {
-        const tokenData = JSON.parse(scannedData);
-        navigation.navigate('RevealInvoiceScreen', { token: tokenData });
-      } catch (err) {
-        navigation.navigate('RevealInvoiceScreen', { token: scannedData });
-      }
-    }
+  const handleRedeemToken = async () => {
+    if (!scannedData) return;
+    setRedeemLoading(true);
+    setRedeemError(null);
+    setRedeemResult(null);
     setShowModal(false);
-    setScannedData(null);
-    setScanning(true);
+    
+    try {
+      const data = await receiveCashuToken(scannedData);
+      // Get new balance after receiving token
+      const balanceData = await getBalance();
+      const newBalance = balanceData.mints ? (Object.values(balanceData.mints)[0] as { available: number }).available : 0;
+      setRedeemResult('Token Received Successfully!');
+      Alert.alert('Success', 'Cashu token has been redeemed successfully!');
+    } catch (err: any) {
+      setRedeemError(err.message || 'Failed to receive BTC');
+      Alert.alert('Error', err.message || 'Failed to receive BTC');
+    } finally {
+      setRedeemLoading(false);
+    }
   };
 
   const handleScanAgain = () => {
     setShowModal(false);
     setScannedData(null);
+    setRedeemResult(null);
+    setRedeemError(null);
     setScanning(true);
   };
 
@@ -122,6 +136,34 @@ const QRScannerScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Loading overlay for redemption */}
+      {redeemLoading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContent}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.loadingText}>Redeeming Cashu Token...</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Result display */}
+      {redeemResult && (
+        <View style={styles.resultOverlay}>
+          <View style={styles.resultContent}>
+            <Text style={styles.successText}>{redeemResult}</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                setRedeemResult(null);
+                setScanning(true);
+              }}
+            >
+              <Text style={styles.buttonText}>Scan Another</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <Modal
         visible={showModal}
         transparent={true}
@@ -131,7 +173,7 @@ const QRScannerScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>QR Code Scanned!</Text>
-            <Text style={styles.modalSubtitle}>Content:</Text>
+            <Text style={styles.modalSubtitle}>Cashu Token Content:</Text>
             <View style={styles.dataContainer}>
               <Text style={styles.scannedData} numberOfLines={10}>
                 {scannedData}
@@ -140,13 +182,17 @@ const QRScannerScreen = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.proceedButton]}
-                onPress={handleProceed}
+                onPress={handleRedeemToken}
+                disabled={redeemLoading}
               >
-                <Text style={styles.modalButtonText}>Proceed</Text>
+                <Text style={styles.modalButtonText}>
+                  {redeemLoading ? 'Redeeming...' : 'Redeem Token'}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.scanAgainButton]}
                 onPress={handleScanAgain}
+                disabled={redeemLoading}
               >
                 <Text style={styles.modalButtonText}>Scan Again</Text>
               </TouchableOpacity>
@@ -202,6 +248,48 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: theme.typography.fontSizes.medium,
     textAlign: 'center',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContent: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.medium,
+    alignItems: 'center',
+  },
+  resultOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  resultContent: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    borderRadius: theme.borderRadius.medium,
+    alignItems: 'center',
+    margin: theme.spacing.m,
+  },
+  successText: {
+    color: theme.colors.success || '#4CAF50',
+    fontSize: theme.typography.fontSizes.large,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: theme.spacing.m,
   },
   modalOverlay: {
     flex: 1,
