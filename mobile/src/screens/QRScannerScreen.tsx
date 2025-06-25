@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
 import { Camera } from 'react-native-camera-kit';
 import { useNavigation } from '@react-navigation/native';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -9,6 +9,8 @@ const QRScannerScreen = () => {
   const navigation = useNavigation<any>();
   const [scanning, setScanning] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scannedData, setScannedData] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     checkCameraPermission();
@@ -42,13 +44,29 @@ const QRScannerScreen = () => {
     if (scanning && event?.nativeEvent?.codeStringValue) {
       setScanning(false);
       const data = event.nativeEvent.codeStringValue;
+      setScannedData(data);
+      setShowModal(true);
+    }
+  };
+
+  const handleProceed = () => {
+    if (scannedData) {
       try {
-        const tokenData = JSON.parse(data);
-        navigation.navigate('RevealInvoice', { token: tokenData });
+        const tokenData = JSON.parse(scannedData);
+        navigation.navigate('RevealInvoiceScreen', { token: tokenData });
       } catch (err) {
-        navigation.navigate('RevealInvoice', { token: data });
+        navigation.navigate('RevealInvoiceScreen', { token: scannedData });
       }
     }
+    setShowModal(false);
+    setScannedData(null);
+    setScanning(true);
+  };
+
+  const handleScanAgain = () => {
+    setShowModal(false);
+    setScannedData(null);
+    setScanning(true);
   };
 
   const onError = (event: { nativeEvent: { errorMessage: string } }) => {
@@ -103,6 +121,39 @@ const QRScannerScreen = () => {
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>QR Code Scanned!</Text>
+            <Text style={styles.modalSubtitle}>Content:</Text>
+            <View style={styles.dataContainer}>
+              <Text style={styles.scannedData} numberOfLines={10}>
+                {scannedData}
+              </Text>
+            </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.proceedButton]}
+                onPress={handleProceed}
+              >
+                <Text style={styles.modalButtonText}>Proceed</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.scanAgainButton]}
+                onPress={handleScanAgain}
+              >
+                <Text style={styles.modalButtonText}>Scan Again</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -151,6 +202,66 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: theme.typography.fontSizes.medium,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.l,
+    margin: theme.spacing.m,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: theme.typography.fontSizes.large,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: theme.spacing.m,
+  },
+  modalSubtitle: {
+    fontSize: theme.typography.fontSizes.medium,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.s,
+  },
+  dataContainer: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.small,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    maxHeight: 200,
+  },
+  scannedData: {
+    fontSize: theme.typography.fontSizes.small,
+    color: theme.colors.text,
+    fontFamily: 'monospace',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.m,
+  },
+  modalButton: {
+    flex: 1,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.medium,
+    alignItems: 'center',
+  },
+  proceedButton: {
+    backgroundColor: theme.colors.primary,
+  },
+  scanAgainButton: {
+    backgroundColor: '#666',
+  },
+  modalButtonText: {
+    color: theme.colors.buttonText,
+    fontSize: theme.typography.fontSizes.medium,
+    fontWeight: 'bold',
   },
 });
 
